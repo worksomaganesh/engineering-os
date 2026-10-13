@@ -13,3 +13,4 @@ A good concept document should include:
 ## Concepts
 
 - [API — Application Programming Interface](api.md)
+- [HTTP and HTTPS — Web Communication and Security](http-and-https.md)
