@@ -43,6 +43,7 @@ This repository is not just a collection of random notes or a project portfolio.
 - Use **`builds/`** for runnable code, experiments, or small projects.
 - Use **`cheat-sheets/`** for quick summaries, commands, patterns, and revision material.
 - Use **`questions/`** for questions and answers that are worth keeping.
+- Use **`platforms/`** for platform-specific guides such as AWS, Azure, Docker, and Kubernetes.
 
 ## Guiding Principle
 
