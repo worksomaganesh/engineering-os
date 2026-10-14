@@ -17,5 +17,6 @@ A good concept document should include:
 - [REST API — Representational State Transfer](rest-api.md)
 - [JSON — JavaScript Object Notation and JSON Prompting](json.md)
 - [API Keys and Secrets — Protecting Credentials](api-keys-and-secrets.md)
+- [RAG and Fine-Tuning — Retrieval vs. Model Adaptation](rag-and-fine-tuning.md)
 - [Authentication and Authorization](authentication-and-authorization.md)
 - [MCP — Model Context Protocol](mcp.md)
