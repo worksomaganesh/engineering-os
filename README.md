@@ -13,6 +13,7 @@ This repository is not just a collection of random notes or a project portfolio.
 | [`builds/`](builds/README.md) | Small builds, experiments, prototypes, and projects |
 | [`cheat-sheets/`](cheat-sheets/README.md) | Concise references for quick revision |
 | [`questions/`](questions/README.md) | Questions I have asked, with clear answers and follow-up insights |
+| [`platforms/`](platforms/README.md) | Guides to cloud providers, developer platforms, and technology ecosystems |
 
 ## Topics I Plan to Explore
 
