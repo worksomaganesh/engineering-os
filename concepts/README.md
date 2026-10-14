@@ -20,3 +20,4 @@ A good concept document should include:
 - [RAG and Fine-Tuning — Retrieval vs. Model Adaptation](rag-and-fine-tuning.md)
 - [Authentication and Authorization](authentication-and-authorization.md)
 - [MCP — Model Context Protocol](mcp.md)
+- [Why Are Some API Keys Shared Publicly on GitHub?](free-api-keys-on-github.md) — free API directories vs shared credentials, quotas, gateways, risks, and safe practices.
