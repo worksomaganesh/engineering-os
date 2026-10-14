@@ -2,52 +2,93 @@
 
 **Engineering OS is my personal engineering knowledge base and learning system.**
 
-This repository is not just a collection of random notes or a project portfolio. It is a long-term archive of what I learn, how I understand it, what I build, the questions I ask, and how my engineering knowledge grows over time.
+This repository is a long-term archive of what I learn, how I understand it, what I build, the questions I ask, and how my engineering knowledge grows over time. It is both a learning reference and a record of practical engineering work—not just a collection of random notes or a project portfolio.
 
 ## Repository Structure
 
+```text
+engineering-os/
+├── README.md
+├── notes/
+│   └── README.md
+├── concepts/
+│   ├── README.md
+│   ├── api/
+│   │   └── README.md
+│   ├── api-keys-and-secrets/
+│   │   └── README.md
+│   ├── authentication-and-authorization/
+│   │   └── README.md
+│   ├── free-api-keys-on-github/
+│   │   └── README.md
+│   ├── http-and-https/
+│   │   └── README.md
+│   ├── json/
+│   │   └── README.md
+│   ├── mcp/
+│   │   └── README.md
+│   ├── rag-and-fine-tuning/
+│   │   └── README.md
+│   └── rest-api/
+│       └── README.md
+├── platforms/
+│   ├── README.md
+│   └── aws/
+│       └── README.md
+├── cheat-sheets/
+│   ├── README.md
+│   ├── git-commands.md
+│   └── linux-commands.md
+├── builds/
+│   └── README.md
+└── questions/
+    └── README.md
+```
+
+## Main Sections
+
 | Folder | Purpose |
 |---|---|
-| [`notes/`](notes/README.md) | Daily or regular learning notes and session summaries |
-| [`concepts/`](concepts/README.md) | Deeper explanations of engineering concepts and how things work |
-| [`builds/`](builds/README.md) | Small builds, experiments, prototypes, and projects |
-| [`cheat-sheets/`](cheat-sheets/README.md) | Concise references for quick revision |
-| [`questions/`](questions/README.md) | Questions I have asked, with clear answers and follow-up insights |
-| [`platforms/`](platforms/README.md) | Guides to cloud providers, developer platforms, and technology ecosystems |
-
-## Topics I Plan to Explore
-
-- APIs, HTTP, REST, JSON, and integrations
-- Deployment, hosting, and production environments
-- Runtime behavior and how code executes behind the scenes
-- Software architecture and system design fundamentals
-- Artificial intelligence and machine learning
-- Model Context Protocol (MCP) and tool integrations
-- Forward Deployed Engineering
-- Data structures and algorithms
-- LeetCode, NeetCode, Blind 75, and company-specific coding problems
-- Other software engineering fundamentals
-
-## My Learning Loop
-
-1. **Learn** a new idea or skill.
-2. **Understand** how and why it works.
-3. **Document** it in the appropriate folder.
-4. **Experiment** by building a small example when useful.
-5. **Revise** it later using notes and cheat sheets.
-6. **Reflect** on questions, mistakes, and improvements.
+| [`notes/`](notes/README.md) | Dated or topic-based notes from courses, tutorials, documentation, and study sessions |
+| [`concepts/`](concepts/README.md) | In-depth engineering concepts, with one folder per concept and a full guide in each folder's `README.md` |
+| [`platforms/`](platforms/README.md) | Guides to specific platforms and ecosystems, such as cloud providers and deployment platforms |
+| [`cheat-sheets/`](cheat-sheets/README.md) | Quick-reference sheets for commands, syntax, workflows, and revision |
+| [`builds/`](builds/README.md) | Runnable experiments, prototypes, small builds, and projects |
+| [`questions/`](questions/README.md) | Questions worth preserving, with clear answers and follow-up insights |
 
 ## Where Should New Knowledge Go?
 
-- Use **`notes/`** for what I learned during a day, course, tutorial, or study session.
-- Use **`concepts/`** for a standalone explanation that I want to understand and revisit.
-- Use **`builds/`** for runnable code, experiments, or small projects.
-- Use **`cheat-sheets/`** for quick summaries, commands, patterns, and revision material.
-- Use **`questions/`** for questions and answers that are worth keeping.
-- Use **`platforms/`** for platform-specific guides such as AWS, Azure, Docker, and Kubernetes.
+- **A general engineering idea:** put it in `concepts/<concept-name>/README.md`.
+- **A specific technology platform:** put it in `platforms/<platform-name>/README.md`.
+- **A concise reference:** put it in `cheat-sheets/`, and add it to that folder's index.
+- **A learning session:** record it in `notes/`.
+- **A working prototype or experiment:** place it in `builds/`.
+- **A question and its answer:** preserve it in `questions/`.
+
+Every folder should contain a `README.md` that explains its purpose or, for a topic folder, serves as the full topic guide. Index READMEs should link to the relevant subfolders.
+
+## Learning Loop
+
+1. **Learn** a new idea or skill.
+2. **Understand** what problem it solves and how it works.
+3. **Document** it in the correct section.
+4. **Experiment** by building a small example when useful.
+5. **Revise** using concepts and cheat sheets.
+6. **Reflect** on questions, mistakes, and improvements.
+
+## Topics to Explore
+
+- APIs, HTTP, REST, JSON, authentication, and integrations
+- Cloud computing, deployment, hosting, and production environments
+- Linux, Git, and developer tooling
+- Runtime behaviour, software architecture, and system design
+- Artificial intelligence, machine learning, RAG, fine-tuning, and MCP
+- Data structures and algorithms
+- LeetCode, NeetCode, Blind 75, and company-specific coding problems
+- Other software engineering fundamentals
 
 ## Guiding Principle
 
 > Learn it, understand it, document it, build with it, and revisit it.
 
-This repository will evolve with me throughout my engineering journey. I will prefer clear explanations, practical examples, useful links, and honest notes about what I do not yet understand.
+Prefer clear explanations, practical examples, useful links, and honest notes about limitations or uncertainties. Keep existing learning content intact when reorganising the repository; update links when a file's location changes.

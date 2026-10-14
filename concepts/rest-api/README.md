@@ -4,7 +4,7 @@ A REST API is a common way for applications to communicate over the web using HT
 
 Imagine you are building an online store. The website needs to retrieve products, create orders, update inventory, and retrieve order details. A REST API defines a consistent way for a frontend, mobile application, or another service to request those operations from the backend.
 
-This guide builds on the concepts in [API](api.md) and [HTTP and HTTPS](http-and-https.md).
+This guide builds on the concepts in [API](../api/README.md) and [HTTP and HTTPS](../http-and-https/README.md).
 
 ## 1. What Does REST API Stand For?
 

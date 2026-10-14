@@ -343,4 +343,4 @@ The security rule has not changed:
 - [GitHub's free-llm-api topic](https://github.com/topics/free-llm-api)
 - [Google Cloud: Best practices for managing API keys](https://docs.cloud.google.com/docs/authentication/api-keys-best-practices)
 - [Google API Console: Best practices for securely using API keys](https://support.google.com/googleapi/answer/6310037)
-- [Engineering OS: API Keys and Secrets](api-keys-and-secrets.md)
+- [Engineering OS: API Keys and Secrets](../api-keys-and-secrets/README.md)
