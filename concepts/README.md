@@ -16,5 +16,6 @@ A good concept document should include:
 - [HTTP and HTTPS — Web Communication and Security](http-and-https.md)
 - [REST API — Representational State Transfer](rest-api.md)
 - [JSON — JavaScript Object Notation and JSON Prompting](json.md)
+- [API Keys and Secrets — Protecting Credentials](api-keys-and-secrets.md)
 - [Authentication and Authorization](authentication-and-authorization.md)
 - [MCP — Model Context Protocol](mcp.md)
