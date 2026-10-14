@@ -9,3 +9,4 @@ Keep each sheet scannable and accurate. Link to a full document in `concepts/` w
 ## Available Cheat Sheets
 
 - [Git Commands Cheat Sheet](git-commands.md) — everyday commands, branches, remotes, undoing changes, and advanced references.
+- [Linux Commands Cheat Sheet](linux-commands.md) — detailed terminal commands, files, permissions, processes, networking, packages, Bash scripting, and safety.
