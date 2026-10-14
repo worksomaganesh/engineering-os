@@ -14,4 +14,5 @@ A good concept document should include:
 
 - [API — Application Programming Interface](api.md)
 - [HTTP and HTTPS — Web Communication and Security](http-and-https.md)
+- [REST API — Representational State Transfer](rest-api.md)
 - [MCP — Model Context Protocol](mcp.md)
