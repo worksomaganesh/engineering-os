@@ -1,13 +1,33 @@
 # Builds and Experiments
 
-Use this folder for small runnable examples, experiments, prototypes, and projects that turn learning into practice.
+Use this folder for prototypes, experiments, and product concepts that turn engineering knowledge into practical systems. A build may begin as a researched specification before code exists; each project must clearly state its current status.
 
-For each build, record:
-- The problem or question being explored
-- Requirements and approach
-- Setup and run instructions
-- Code and important design decisions
-- What worked, what failed, and what I learned
-- Possible improvements
+## Projects
 
-Prefer small, understandable experiments that demonstrate one or two ideas well.
+| Project | Purpose | Status |
+|---|---|---|
+| [GeM Tender Copilot](gem-tender-copilot/README.md) | Research-backed blueprint for an evidence-first tender PDF analysis and bid-readiness assistant for Indian MSME sellers | Concept / implementation blueprint |
+
+## What Each Project Should Document
+
+Where applicable, a project folder should contain:
+- `README.md` — project overview, problem, users, proposed solution, scope, and navigation.
+- Product requirements and acceptance criteria.
+- Architecture and end-to-end data flow.
+- Data model and important interfaces.
+- Evaluation, testing, and measurable quality gates.
+- Security, privacy, and domain-specific risk controls.
+- Roadmap, validation plan, risks, and open decisions.
+- Source links for claims, platform behavior, and official guidance.
+
+Not every small experiment needs all these files. Use enough documentation to make the problem, implementation, and limitations understandable.
+
+## Engineering Principles
+
+- Document what exists separately from what is proposed.
+- Prefer a small working end-to-end slice over a large unvalidated feature list.
+- Preserve source evidence and make important results reproducible.
+- Test failures, edge cases, and security boundaries—not only the happy path.
+- Measure performance, quality, and cost before making claims.
+- Keep secrets and private data out of source control.
+- Update the relevant project README and this index when adding a build.

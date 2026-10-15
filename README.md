@@ -50,7 +50,15 @@ engineering-os/
 │   ├── git-commands.md
 │   └── linux-commands.md
 ├── builds/
-│   └── README.md
+│   ├── README.md
+│   └── gem-tender-copilot/
+│       ├── README.md
+│       ├── product-requirements.md
+│       ├── technical-architecture.md
+│       ├── data-model.md
+│       ├── evaluation-plan.md
+│       ├── security-and-compliance.md
+│       └── roadmap.md
 └── questions/
     └── README.md
 ```
