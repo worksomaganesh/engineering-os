@@ -18,6 +18,7 @@ Use a concept guide when you want to understand what something is, why it exists
 | [MCP — Model Context Protocol](mcp/README.md) | MCP hosts, clients, servers, tools, resources, prompts, and security |
 | [Free API Keys on GitHub](free-api-keys-on-github/README.md) | API directories, shared credentials, gateways, quotas, and safe practices |
 | [What Happens When You Click Run?](what-happens-when-you-click-run/README.md) | From editor and Run button through compilers, runtimes, OS processes, input/output, remote sandboxes, and displayed results |
+| [Programming Languages and Web Technologies](languages-and-web-technologies/README.md) | Use cases and best practices for Python, C, C++, Java, Rust, Swift, TypeScript, React, Tailwind CSS, CSS, and HTML |
 
 ## Where Related Knowledge Goes
 
