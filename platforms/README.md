@@ -9,6 +9,7 @@ This folder contains guides to specific platforms and ecosystems used to build, 
 | Folder | What it covers |
 |---|---|
 | [AWS — Amazon Web Services](aws/README.md) | Cloud computing, EC2, S3, RDS, Lambda, IAM, application architecture, pricing, security, and a learning path |
+| [Google Cloud Platform (GCP)](google-cloud/README.md) | Projects, Compute Engine, Cloud Run, Cloud Storage, databases, BigQuery, Vertex AI, IAM, billing, and a beginner learning path |
 
 ## What Belongs Here?
 

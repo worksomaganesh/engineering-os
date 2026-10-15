@@ -33,7 +33,9 @@ engineering-os/
 │       └── README.md
 ├── platforms/
 │   ├── README.md
-│   └── aws/
+│   ├── aws/
+│   │   └── README.md
+│   └── google-cloud/
 │       └── README.md
 ├── cheat-sheets/
 │   ├── README.md
