@@ -68,14 +68,24 @@ engineering-os/
 │       ├── evaluation-plan.md
 │       ├── security-and-compliance.md
 │       └── roadmap.md
-│   └── gst-reconciliation-copilot/
+│   ├── gst-reconciliation-copilot/
+│   │   ├── README.md
+│   │   ├── product-requirements.md
+│   │   ├── technical-architecture.md
+│   │   ├── data-model.md
+│   │   ├── ux-and-workflows.md
+│   │   ├── evaluation-plan.md
+│   │   ├── security-and-compliance.md
+│   │   └── roadmap.md
+│   └── ai-agent-firewall/
 │       ├── README.md
 │       ├── product-requirements.md
 │       ├── technical-architecture.md
+│       ├── threat-model-and-policy.md
+│       ├── cli-and-workflows.md
 │       ├── data-model.md
-│       ├── ux-and-workflows.md
 │       ├── evaluation-plan.md
-│       ├── security-and-compliance.md
+│       ├── security-and-limitations.md
 │       └── roadmap.md
 └── questions/
     └── README.md

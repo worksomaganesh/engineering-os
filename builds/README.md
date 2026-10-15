@@ -9,6 +9,7 @@ Use this folder for prototypes, experiments, and product concepts that turn engi
 | [GeM Tender Copilot](gem-tender-copilot/README.md) | Research-backed blueprint for an evidence-first tender PDF analysis and bid-readiness assistant for Indian MSME sellers | Concept / implementation blueprint |
 | [WhatsApp Lead Rescue](whatsapp-lead-rescue/README.md) | Action-first assistant for finding unanswered WhatsApp enquiries and promised sales actions | Concept / implementation blueprint |
 | [GST Reconciliation Copilot](gst-reconciliation-copilot/README.md) | Evidence-first purchase-register vs GSTR-2B reconciliation and discrepancy workbench for CA/finance teams | Concept / implementation blueprint |
+| [AI Agent Firewall](ai-agent-firewall/README.md) | Local guardrails, scoped approvals, sandbox enforcement, audit events, and reports for AI coding-agent sessions | Concept / implementation blueprint |
 
 ## What Each Project Should Document
 
