@@ -17,6 +17,7 @@ Use a concept guide when you want to understand what something is, why it exists
 | [RAG and Fine-Tuning](rag-and-fine-tuning/README.md) | Retrieval-augmented generation, model training, differences, and hybrid designs |
 | [MCP — Model Context Protocol](mcp/README.md) | MCP hosts, clients, servers, tools, resources, prompts, and security |
 | [Free API Keys on GitHub](free-api-keys-on-github/README.md) | API directories, shared credentials, gateways, quotas, and safe practices |
+| [What Happens When You Click Run?](what-happens-when-you-click-run/README.md) | From editor and Run button through compilers, runtimes, OS processes, input/output, remote sandboxes, and displayed results |
 
 ## Where Related Knowledge Goes
 
