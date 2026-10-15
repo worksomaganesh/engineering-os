@@ -77,15 +77,26 @@ engineering-os/
 │   │   ├── evaluation-plan.md
 │   │   ├── security-and-compliance.md
 │   │   └── roadmap.md
-│   └── ai-agent-firewall/
+│   ├── ai-agent-firewall/
+│   │   ├── README.md
+│   │   ├── product-requirements.md
+│   │   ├── technical-architecture.md
+│   │   ├── threat-model-and-policy.md
+│   │   ├── cli-and-workflows.md
+│   │   ├── data-model.md
+│   │   ├── evaluation-plan.md
+│   │   ├── security-and-limitations.md
+│   │   └── roadmap.md
+│   └── ai-pr-verification-agent/
 │       ├── README.md
 │       ├── product-requirements.md
 │       ├── technical-architecture.md
-│       ├── threat-model-and-policy.md
-│       ├── cli-and-workflows.md
+│       ├── verification-workflow.md
 │       ├── data-model.md
+│       ├── testing-and-browser-verification.md
+│       ├── github-app-and-permissions.md
+│       ├── security-and-threat-model.md
 │       ├── evaluation-plan.md
-│       ├── security-and-limitations.md
 │       └── roadmap.md
 └── questions/
     └── README.md

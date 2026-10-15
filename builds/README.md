@@ -10,6 +10,7 @@ Use this folder for prototypes, experiments, and product concepts that turn engi
 | [WhatsApp Lead Rescue](whatsapp-lead-rescue/README.md) | Action-first assistant for finding unanswered WhatsApp enquiries and promised sales actions | Concept / implementation blueprint |
 | [GST Reconciliation Copilot](gst-reconciliation-copilot/README.md) | Evidence-first purchase-register vs GSTR-2B reconciliation and discrepancy workbench for CA/finance teams | Concept / implementation blueprint |
 | [AI Agent Firewall](ai-agent-firewall/README.md) | Local guardrails, scoped approvals, sandbox enforcement, audit events, and reports for AI coding-agent sessions | Concept / implementation blueprint |
+| [AI PR Verification Agent](ai-pr-verification-agent/README.md) | GitHub App blueprint for change-specific test planning, safe check execution, browser smoke tests, and evidence-backed PR reports | Concept / implementation blueprint |
 
 ## What Each Project Should Document
 
