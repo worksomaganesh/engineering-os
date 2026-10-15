@@ -7,6 +7,7 @@ Use this folder for prototypes, experiments, and product concepts that turn engi
 | Project | Purpose | Status |
 |---|---|---|
 | [GeM Tender Copilot](gem-tender-copilot/README.md) | Research-backed blueprint for an evidence-first tender PDF analysis and bid-readiness assistant for Indian MSME sellers | Concept / implementation blueprint |
+| [WhatsApp Lead Rescue](whatsapp-lead-rescue/README.md) | Action-first assistant for finding unanswered WhatsApp enquiries and promised sales actions | Concept / implementation blueprint |
 
 ## What Each Project Should Document
 
