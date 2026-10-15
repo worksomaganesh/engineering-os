@@ -37,7 +37,9 @@ engineering-os/
 │   │   └── README.md
 │   ├── google-cloud/
 │   │   └── README.md
-│   └── firebase/
+│   ├── firebase/
+│   │   └── README.md
+│   └── github/
 │       └── README.md
 ├── cheat-sheets/
 │   ├── README.md
