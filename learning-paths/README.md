@@ -6,7 +6,7 @@ This folder contains step-by-step learning programs, not standalone concept ency
 
 | Path | Goal | Best for |
 |---|---|---|
-| [DSA From Zero — Learn to Think, Recognize Patterns, and Solve Problems](dsa-from-zero/README.md) | A structured route from "I don't know how to start" to understanding common data structures, algorithms, problem-solving patterns, and efficient solutions | Beginners learning DSA for coursework, placements, projects, and long-term software engineering |
+| [DSA From Zero — Learn to Think, Recognize Patterns, and Solve Problems](dsa/README.md) | A structured route from “I don't know how to start” to understanding common data structures, algorithms, problem-solving patterns, and efficient solutions | Beginners learning DSA for coursework, placements, projects, and long-term software engineering |
 
 ## How to use a learning path
 
