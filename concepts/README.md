@@ -16,6 +16,7 @@ Use a concept guide when you want to understand what something is, why it exists
 | [Authentication and Authorization](authentication-and-authorization/README.md) | Identity, permissions, access control, sessions, and tokens |
 | [Data Structures and Algorithms — DSA in the AI Era](data-structures-and-algorithms/README.md) | What DSA is, problem-solving foundations, placements, AI-era relevance, practice platforms, and a 2026–2030 learning strategy |
 | [DevOps](devops/README.md) | DevOps culture, CI/CD, infrastructure as code, containers, deployment safety, monitoring, DevSecOps, MLOps, and beginner projects |
+| [Kubernetes](kubernetes/README.md) | Cluster architecture, Pods, Deployments, Services, networking, storage, scaling, security, troubleshooting, and AI/ML workloads |
 | [RAG and Fine-Tuning](rag-and-fine-tuning/README.md) | Retrieval-augmented generation, model training, differences, and hybrid designs |
 | [MCP — Model Context Protocol](mcp/README.md) | MCP hosts, clients, servers, tools, resources, prompts, and security |
 | [Free API Keys on GitHub](free-api-keys-on-github/README.md) | API directories, shared credentials, gateways, quotas, and safe practices |

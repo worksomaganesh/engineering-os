@@ -1,323 +1,322 @@
-# Kubernetes — The Complete Beginner-to-Engineering Guide
+# Kubernetes — A Detailed Beginner-to-Engineering Guide
 
-> **The one-sentence idea:** Kubernetes helps run and manage containerized applications across a group of machines by continuously working to keep the actual system close to the state you declare.
+> **Purpose:** Understand what Kubernetes is, what problems it solves, how its components cooperate, how to deploy and operate applications with it, and why it matters for modern AI/ML systems.
+>
+> This guide is written for learning. Commands and manifests are illustrative; adapt images, versions, security settings, storage classes, networking, and cloud configuration to the environment you actually use.
 
-**Who this guide is for:** a developer or AI/ML student learning how applications move from "it works on my laptop" to reliable services, background jobs, and production AI systems.
+## 1. The short answer
 
-**Scope note:** Kubernetes is a large ecosystem. This guide builds a practical mental model and links to the official documentation for details. It does not mean every application needs Kubernetes, and it is not a replacement for understanding Linux, networking, containers, software design, or cloud fundamentals.
+**Kubernetes (often shortened to K8s) is an open-source system for deploying, scheduling, scaling, and managing containerized applications across a cluster of machines.**
 
-## The answer up front
+You tell Kubernetes the state you want—for example, "keep three healthy copies of this API running and make them reachable"—and its control loops continually work to make the real system match that desired state.
 
-- **What is Kubernetes?** An open-source platform for orchestrating containerized workloads and services. It lets you declare how applications should run and automates much of the work of scheduling, restarting, scaling, and exposing them. [Official overview](https://kubernetes.io/docs/concepts/overview/)
-- **Why is it useful?** It helps operate many application instances, services, workers, and infrastructure components in a repeatable way across a cluster.
-- **Why learn it?** It is useful when your work involves cloud-native backend systems, platform engineering, DevOps/SRE, data platforms, or production AI/ML workloads. It also teaches important systems concepts.
-- **Is it needed for every project?** No. For a small API or a student prototype, a simpler managed service or one container may be cheaper and easier.
-- **Why does it matter in the AI era?** AI/ML systems may need repeatable batch jobs, GPU-aware scheduling, model-serving replicas, resource allocation, pipelines, and scalable service infrastructure. Kubernetes provides some of that infrastructure; projects such as Kubeflow and KServe build AI-specific capabilities on top.
+Kubernetes can:
+- Schedule containers onto suitable machines.
+- Restart or replace failed application instances.
+- Scale workloads up or down.
+- Give groups of Pods stable network identities through Services.
+- Manage configuration, credentials, and persistent storage integrations.
+- Perform controlled application rollouts and rollbacks.
+- Coordinate batch jobs and, with the right hardware plugins and ecosystem tools, AI/ML workloads.
+- Expose APIs so teams can automate operations and build higher-level platforms.
 
-## 1. Start with the problem Kubernetes solves
+Kubernetes **does not** automatically make an application correct, secure, inexpensive, observable, or highly available. Those properties require appropriate application design, cluster configuration, policies, testing, and operational practices.
 
-Imagine you build an AI study assistant with a web frontend, a Python API, a background document-processing worker, and a database.
+Official introduction: [Kubernetes — What is Kubernetes?](https://kubernetes.io/docs/concepts/overview/).
 
-At the beginning you can run everything on your laptop. Later, more students use it. You may need several API copies, a worker queue, a model-inference service, and a way to replace a failed instance. Then questions appear:
+## 2. Why was Kubernetes created?
 
-- Which machine should run each application?
-- What happens if one application process crashes?
-- How do users reach a service when its instances change?
-- How do you deploy a new version without unnecessarily interrupting users?
-- How do you add replicas when traffic grows and reduce them later?
-- How do you reserve CPU and memory so one workload does not consume everything?
-- How do you provide configuration and credentials without baking them into images?
-- How do you recover if a machine disappears?
-- How do you manage many related services consistently?
+Imagine your application starts as one Python API on your laptop. At first, running it is simple. Then more users arrive and the system grows.
 
-You could write scripts to manage these tasks. But as the number of workloads and machines grows, custom scripts can become fragile. Kubernetes is designed to manage this operational complexity using a declarative API and controllers.
+You may need to:
+1. Run several copies of the API.
+2. Put those copies on more than one machine.
+3. send requests to healthy copies.
+4. replace a crashed copy.
+5. release a new version without taking the service down.
+6. run background tasks separately from web requests.
+7. attach storage for data that must survive a container restart.
+8. restrict which workloads can access sensitive services.
+9. allocate CPU, memory, and possibly GPUs.
+10. know what is running, where it is running, and why it is unhealthy.
 
-**Kubernetes is not primarily a tool for writing the application. It is a platform for managing how containerized applications run.**
+Doing all of this manually across many machines quickly becomes fragile. A shell script can help with a few steps, but a growing system needs a common API, a scheduler, health information, state reconciliation, networking, storage integrations, and consistent operational patterns.
 
-## 2. What does "orchestration" mean?
+Kubernetes provides a platform for those tasks. It grew from ideas about declarative cluster management and is now an open-source project maintained by the Kubernetes community under the Cloud Native Computing Foundation.
 
-A container runtime can start a container. Orchestration coordinates containers across a larger system.
+### A simple analogy: a fleet manager
 
-A simplified example:
+Imagine a delivery company with 50 vans:
+- You say how many vans must be operational.
+- A dispatcher assigns work to available vans.
+- If a van breaks, the dispatcher arranges a replacement.
+- A dashboard tracks the fleet.
+- Routes and policies determine where work can go.
 
-1. You package the API in a container image.
-2. You declare that three interchangeable API instances should run.
-3. Kubernetes schedules those instances as Pods on suitable machines.
-4. A controller notices if fewer healthy replicas exist than requested.
-5. A stable Service gives other applications one way to reach the replicas.
-6. A deployment update replaces old replicas with new ones according to its strategy.
-7. A health check can stop sending traffic to an instance that is not ready.
-8. An autoscaler may adjust the desired replica count based on supported metrics.
+Kubernetes is like a fleet manager for application workloads. A **Pod** is the basic unit it schedules; a **node** is a machine that can run Pods; the **scheduler** selects a suitable node; and **controllers** continually check whether the desired number and state of workloads exist.
 
-This does not mean every problem fixes itself. Kubernetes can restart a process that repeatedly crashes, but it cannot automatically debug faulty code. A Deployment can maintain three Pods, but it cannot make a database query correct or guarantee the application has no bugs.
+The analogy has limits: Kubernetes does not understand your business logic automatically. It uses the health signals and desired state you configure.
 
-## 3. What Kubernetes is—and is not
+## 3. First understand containers
 
-### Kubernetes is
-- An API for declaring and managing workloads and resources.
-- A scheduler that places Pods on eligible nodes.
-- A set of controllers that reconcile desired and observed state.
-- A platform for service discovery and cluster networking abstractions.
-- A mechanism for configuring workloads, attaching storage, and controlling resource allocation.
-- An extensible foundation for platform engineering and cloud-native systems.
-- A widely used building block for AI/ML infrastructure, often combined with other tools.
+A container is a way to run an application with its user-space dependencies in an isolated environment. A container image packages the filesystem layers and metadata needed to start the application. A container runtime—such as containerd—runs containers on a machine.
 
-### Kubernetes is not
-- A programming language or application framework.
-- A container image builder; Docker or another build tool is often used for that step.
-- A cloud provider, though it can run on cloud infrastructure or on-premises machines.
-- Automatically a complete CI/CD system.
-- A database or message queue by itself.
-- A guarantee of zero downtime, security, correctness, or unlimited scaling.
-- Mandatory for every web app.
-- A machine-learning framework or an AI model.
+Docker is widely used to build images and run containers locally. Kubernetes usually works with a compatible container runtime on each worker node; it does not require you to use the Docker Engine as the runtime on every node.
 
-The official project describes Kubernetes as a portable and extensible open-source platform for managing containerized workloads and services, with declarative configuration and automation. [Official Kubernetes overview](https://kubernetes.io/docs/concepts/overview/).
+### What a container solves—and what it doesn't
 
-## 4. The mental model: desired state vs actual state
+A container helps make the application environment more consistent across development, testing, and deployment. It does not automatically:
+- Provide a cluster scheduler.
+- Make a service reachable from the internet.
+- Persist files safely after a container is replaced.
+- Scale the number of instances.
+- Protect secrets or enforce least privilege.
+- Make a program bug-free.
 
-This is the most important concept in Kubernetes.
+Kubernetes manages workloads made from containers across a cluster. Docker and Kubernetes are therefore related, but they are not the same thing.
 
-You declare **desired state** in a resource, such as "run three replicas of my API." Kubernetes observes **actual state**, such as "two replicas are currently healthy," and controllers keep working to reconcile the difference.
+Read next: [Docker documentation](https://docs.docker.com/).
+
+## 4. What exactly is a Kubernetes cluster?
+
+A **cluster** is a set of machines managed as one Kubernetes environment. The machines are commonly called **nodes**.
+
+At a high level:
 
 ```text
-You declare desired state
-        |
-        v
-Kubernetes API stores the desired configuration
-        |
-        v
-Controllers and scheduler observe resources
-        |
-        v
-Kubernetes takes actions to move toward the desired state
-        |
-        v
-Actual state changes (Pods start, become ready, or fail)
-        |
-        └── Controllers observe again and reconcile continuously
+                 YOU / kubectl / CI pipeline
+                           |
+                           v
+                 Kubernetes API Server
+                           |
+                 Desired state is stored
+                           |
+          +----------------+----------------+
+          |                                 |
+          v                                 v
+    Scheduler / Controllers            etcd
+          |
+          v
+   Choose a suitable node
+          |
+     +----+------------------------------+
+     |                                   |
+     v                                   v
+ Worker Node A                      Worker Node B
+ +----------------+                 +----------------+
+ | kubelet        |                 | kubelet        |
+ | container      |                 | container      |
+ | runtime        |                 | runtime        |
+ | Pods           |                 | Pods           |
+ +----------------+                 +----------------+
 ```
 
-This is a feedback loop, not a one-time command sequence.
-
-### Example
-
-You declare that a stateless API needs three replicas. One Pod crashes.
-
-- The controller sees fewer healthy/desired replicas than expected.
-- Kubernetes creates or schedules a replacement Pod.
-- The replacement may be placed on a suitable node.
-- Readiness checks determine when it should receive traffic.
-
-Kubernetes does not typically "repair" the broken process inside the same failed Pod and preserve its exact identity. It replaces or recreates workload instances according to the resource's controller and policy.
-
-### Why declarative configuration is useful
-
-Instead of writing instructions such as "start a process, wait five seconds, then start another," you describe the intended result and let controllers continuously reconcile it.
-
-This allows the system to recover from many forms of ordinary failure. The configuration also becomes reviewable and versionable as code.
-
-## 5. Kubernetes architecture
-
-A Kubernetes cluster has a **control plane** and one or more **worker nodes**. In a managed Kubernetes service, the provider often operates some or most control-plane components for you.
+This is a conceptual picture, not a promise that every component runs in a single process or machine. Managed Kubernetes services may operate the control plane for you, while you remain responsible for workloads and some configuration.
 
 ### Control plane
 
-| Component | Plain-English job |
-|---|---|
-| **kube-apiserver** | The front door to the Kubernetes API. Tools and components communicate through it. |
-| **etcd** | Consistent key-value store holding Kubernetes API data and cluster state. It is a critical component to protect and back up appropriately. |
-| **kube-scheduler** | Chooses a suitable node for Pods that do not yet have a node assignment. It considers resource requests and scheduling constraints. |
-| **kube-controller-manager** | Runs controllers that compare desired state with observed state and take corrective action. |
-| **cloud-controller-manager** (where used) | Connects Kubernetes to cloud-specific resources such as load balancers or nodes. |
+The control plane exposes the Kubernetes API and coordinates cluster state.
+
+- **kube-apiserver:** the main API entry point. Tools and controllers communicate with the cluster through it.
+- **etcd:** a consistent key-value store holding Kubernetes cluster state. It needs reliable protection and backups in self-managed environments.
+- **kube-scheduler:** chooses a suitable node for newly created Pods that do not yet have one.
+- **kube-controller-manager:** runs controllers that observe resources and reconcile actual state toward desired state.
+- **cloud-controller-manager:** when applicable, integrates Kubernetes with a cloud provider for capabilities such as nodes, routes, and load balancers.
 
 ### Worker node
 
-| Component | Plain-English job |
-|---|---|
-| **kubelet** | Node agent that ensures assigned Pods and their containers run according to the Pod specification. |
-| **Container runtime** | Pulls images and starts/stops containers. Examples include containerd and CRI-O; Docker is commonly used to build images but is not the only Kubernetes runtime. |
-| **Networking components** | Implement Pod networking and Service traffic routing; exact implementation depends on the cluster setup. |
+A worker node supplies compute resources to run workloads.
 
-Official reference: [Kubernetes components](https://kubernetes.io/docs/concepts/overview/components/) and [Nodes](https://kubernetes.io/docs/concepts/architecture/nodes/).
+- **kubelet:** node agent that makes sure the Pods assigned to that node are running as specified and reports status.
+- **Container runtime:** pulls images and runs containers.
+- **Network implementation:** supplies Pod networking and connectivity, usually through a Container Network Interface (CNI) implementation.
+- **kube-proxy or an equivalent implementation:** supports Service networking behavior. Some clusters use other implementations for portions of this functionality.
 
-### A normal deployment, step by step
+### Who runs the control plane?
 
-Suppose you run:
+- **Self-managed cluster:** your team is responsible for installing, securing, upgrading, backing up, and monitoring more of the control plane.
+- **Managed Kubernetes:** a cloud provider manages much of the control plane, while you still need to understand worker capacity, workload configuration, security, networking, costs, and application operations.
 
-```bash
-kubectl apply -f deployment.yaml
+Managed Kubernetes reduces some operational burden; it does not eliminate Kubernetes engineering.
+
+Official reference: [Kubernetes components](https://kubernetes.io/docs/concepts/overview/components/).
+
+## 5. The most important idea: declarative desired state
+
+Kubernetes is commonly used declaratively. Instead of manually issuing a command every time an instance crashes, you describe what should exist.
+
+For example:
+
+> "Run three replicas of this container image. Each replica needs 250 millicores of CPU and 256 MiB of memory. Expose them through a stable Service."
+
+A Deployment and related objects represent that intention. Kubernetes controllers observe the objects and work toward the desired state.
+
+### Reconciliation loop
+
+```text
+Read desired state
+       |
+       v
+Observe actual state
+       |
+       v
+Compare desired vs actual
+       |
+       v
+Take corrective action
+       |
+       v
+Observe again (continuously)
 ```
 
-A simplified sequence is:
+If three replicas are desired but only two exist, the relevant controller works toward creating another. If the image cannot be pulled, the Pod may remain unhealthy or waiting; Kubernetes reports the condition but cannot invent the missing image or fix an invalid registry credential.
 
-1. `kubectl` sends an API request to the API server.
-2. The API server authenticates and authorizes the caller and validates the resource.
-3. The API object is persisted in the cluster's state store.
-4. A Deployment controller notices the new desired Deployment and creates/updates a ReplicaSet.
-5. The ReplicaSet controller ensures the desired number of Pods exist.
-6. The scheduler assigns unscheduled Pods to suitable nodes.
-7. The kubelet on each assigned node asks the container runtime to pull images and start containers.
-8. Readiness/liveness/startup probes and other status signals affect how the workload is considered healthy.
-9. Controllers continue reconciling if the Pod or node state changes.
+This is why Kubernetes is more than a deployment command. It is a set of APIs and controllers that continually reconcile state.
 
-This is a conceptual sequence. Internally, Kubernetes controllers operate asynchronously; it is not one synchronous script where every step happens instantaneously.
+### Imperative vs declarative
 
-## 6. Important Kubernetes objects
+- **Imperative:** "Start another instance now."
+- **Declarative:** "The service should have three replicas; keep working toward that state."
 
-Kubernetes resources are objects with a declared specification and an observed status. You interact with them using the Kubernetes API.
+Imperative commands remain useful for inspection and debugging. Declarative manifests are especially useful for repeatable environments, code review, and GitOps workflows.
 
-### Cluster
-The collection of control-plane components and worker nodes that manage workloads. Your application does not usually run "inside the cluster" as one monolithic program; its containers are scheduled into Pods.
+## 6. The core Kubernetes objects you should understand
 
-### Node
-A physical or virtual machine that can run Pods. A node has finite CPU, memory, storage, network, and possibly specialized resources such as GPUs.
+### 6.1 Pod
 
-### Pod
-The smallest deployable unit in Kubernetes. A Pod contains one or more containers that share certain resources, such as a network namespace and optionally volumes.
+A **Pod** is Kubernetes' smallest schedulable workload unit. It contains one or more closely related containers that share networking and can share mounted volumes.
 
-Most applications use one main application container per Pod. Sidecars may be appropriate when a helper must share lifecycle or local resources with the app.
+Most application Pods contain one main container. A multi-container Pod is appropriate when containers need to cooperate tightly—for example, an application container and a sidecar that handles a closely coupled task.
 
-Pods are replaceable workload instances—not durable identities to depend on for ordinary application data.
+A Pod is not normally treated as a permanent server. It can be replaced and receive a different IP address. Use a controller and Service for typical long-running applications.
 
-### Deployment
-A common controller for stateless applications. You describe the Pod template and replica count; the Deployment manages ReplicaSets and supports controlled rollouts and rollbacks of Deployment revisions.
+### 6.2 Deployment
 
-Typical use cases: web API, frontend server, model-inference API.
+A **Deployment** manages a stateless application through ReplicaSets and Pods. It is commonly used for APIs, web servers, and frontend services.
 
-### ReplicaSet
-Maintains a requested number of matching Pods. You will usually manage Deployments, not create ReplicaSets directly.
+It helps manage:
+- Desired replica count.
+- Rolling updates.
+- Rollback to a previous Deployment revision.
+- Replacement of Pods that disappear.
 
-### StatefulSet
-Runs Pods that need stable identities and often persistent storage or ordered scaling/update behavior. Stateful workloads need careful storage, replication, backup, and recovery design; a StatefulSet does not magically make a database highly available.
+A Deployment does not itself provide a public URL or a persistent database.
 
-Examples: certain distributed databases, clustered systems, or components whose identity matters. For managed production databases, using a managed database service may be simpler.
+### 6.3 ReplicaSet
 
-### DaemonSet
-Ensures a Pod runs on each eligible node. Useful for node-level agents such as logging, monitoring, or networking components.
+A **ReplicaSet** maintains a requested number of matching Pods. In ordinary application work, you usually create a Deployment and let it manage ReplicaSets instead of managing ReplicaSets directly.
 
-### Job and CronJob
-- **Job:** runs a task to completion, such as a one-off data import or batch processing task.
-- **CronJob:** creates Jobs on a schedule.
+### 6.4 Service
 
-These are especially relevant to AI/ML data preprocessing, offline evaluation, scheduled reports, and maintenance work.
+A **Service** provides a stable way to reach a set of matching Pods. Pods may be replaced and their IP addresses can change; clients should usually call the Service rather than hard-code Pod IPs.
 
-### Namespace
-A logical boundary for grouping resources inside a cluster—for example, `development`, `staging`, `production`, or a team's namespace. A Namespace is useful for organization and policy, but does not by itself provide complete security or isolate workloads like a separate cluster.
+Common Service types:
+- **ClusterIP:** internal cluster access by default.
+- **NodePort:** exposes a port on cluster nodes; often more of a building block than the preferred public production entry point.
+- **LoadBalancer:** requests an external load balancer when supported by the environment/provider.
 
-### Labels and selectors
-Labels are key-value metadata; selectors identify matching objects. Controllers and Services use labels/selectors to group and discover Pods. A typo between a Service selector and Pod labels can leave a service with no usable backends.
+A Service selects matching Pods using labels and selectors. A Service is not the same as an application container.
 
-### ConfigMap
-Stores non-confidential configuration such as a feature setting or log level. It helps separate configuration from the container image. Do not store passwords or API keys in ConfigMaps.
+### 6.5 Ingress and Gateway API
 
-### Secret
-Intended for confidential data such as tokens or passwords. A Kubernetes Secret is not automatically safe just because it is named "Secret": by default, secret data is not necessarily encrypted at rest in etcd unless encryption is configured. Anyone with powerful enough API or etcd access can expose it. Use least-privilege access, encryption at rest, limited mounting, and external secret systems where appropriate. [Official Secret guidance](https://kubernetes.io/docs/concepts/configuration/secret/).
+A web application often needs HTTP/HTTPS routing from outside the cluster to internal Services.
 
-### Service
-Gives a stable endpoint for a set of Pods. Pods may be replaced and receive different IPs; other workloads should generally access the application through a Service instead of hard-coding individual Pod addresses.
+- **Ingress** is a widely used API for HTTP/HTTPS routing. It requires an Ingress controller; creating an Ingress object alone does not make routing happen.
+- **Gateway API** is a newer, more expressive family of APIs for traffic management, with resources such as GatewayClass, Gateway, and HTTPRoute. Support depends on the chosen implementation.
 
-### Ingress / Gateway API
-Ways to route external traffic into services. Ingress remains widely used, but the Kubernetes documentation says the Ingress API is frozen and recommends considering Gateway API for new capabilities. A functioning controller or gateway implementation is required; creating an Ingress object alone does not install the traffic-routing implementation. [Service and networking documentation](https://kubernetes.io/docs/concepts/services-networking/).
+For a new deployment, evaluate the Gateway API and the supported ingress/gateway implementation for your environment rather than assuming every cluster supports the same features.
 
-### PersistentVolume and PersistentVolumeClaim
-Represent storage made available to the cluster and a workload's request for storage. Storage behavior depends on the provisioner, storage class, access modes, and underlying infrastructure. Persistent storage still needs backup, restore tests, and an understanding of failure modes.
+References: [Services](https://kubernetes.io/docs/concepts/services-networking/service/), [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/), [Gateway API](https://gateway-api.sigs.k8s.io/).
 
-### Custom Resource and Operator
-A Custom Resource Definition (CRD) extends the Kubernetes API with a new kind of object. An Operator adds controllers that automate a particular application's operational tasks through those objects. For example, an operator may coordinate a database's backups and upgrades. [Official Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/).
+### 6.6 ConfigMap and Secret
 
-## 7. How Kubernetes connects applications
+- **ConfigMap:** non-confidential configuration, such as a feature flag or service URL.
+- **Secret:** sensitive data such as a credential or token.
 
-In a multi-component application, Pods need to communicate without depending on the identity of a particular Pod instance.
+Important: a Kubernetes Secret is not automatically a complete secrets-management solution. Configure access controls and encryption at rest appropriately, restrict who can read secrets, avoid printing them in logs, and consider an external secret manager. Do not put real API keys into public example manifests or Git repositories.
 
-- **Pod networking** gives each Pod an address within the cluster network under Kubernetes' network model; the actual networking implementation is supplied by the cluster.
-- **Service discovery** lets a component find a stable service endpoint.
-- **Service** routes connections to eligible backend Pods.
-- **Cluster DNS** commonly lets workloads reach a Service by name.
-- **NetworkPolicy** can restrict allowed Pod traffic, but it only works as intended if the installed networking implementation enforces it.
-- **Gateway API or Ingress** can route external HTTP/HTTPS requests to internal services.
-- **LoadBalancer Service** can use supported infrastructure to expose a service externally.
+### 6.7 Namespace
 
-Example: a frontend Pod calls `http://student-api` via the API's Service name instead of calling Pod IP `10.x.x.x`. Kubernetes can replace API Pods and update the service's backing endpoints while the logical service name remains stable.
+A **Namespace** groups namespaced resources inside a cluster. Teams often use namespaces to separate applications, environments, or ownership boundaries.
 
-Do not expose every Service publicly. Internal APIs, databases, queues, and metrics endpoints usually should remain private.
+Namespaces help organization, but they are not a complete security boundary on their own. Use RBAC, network policies, quotas, and appropriate admission controls where needed.
 
-Official references: [Services, load balancing, and networking](https://kubernetes.io/docs/concepts/services-networking/) and [Services](https://kubernetes.io/docs/concepts/services-networking/service/).
+### 6.8 Job and CronJob
 
-## 8. Scaling and resource management
+- **Job:** runs a task to completion, such as importing data, processing a batch, or evaluating a model.
+- **CronJob:** creates Jobs on a schedule, such as a nightly report or periodic data cleanup.
 
-### Resource requests and limits
+They suit finite tasks better than keeping a permanent web server alive. Retrying a failed Job can be useful, but the task should be designed carefully for retries and idempotency to avoid duplicate side effects.
 
-Containers can declare CPU and memory requests and limits.
+### 6.9 StatefulSet and persistent storage
 
-- A **request** helps the scheduler decide where a Pod fits and contributes to CPU/memory utilization calculations for some autoscaling modes.
-- A **limit** places a cap on supported resources such as CPU or memory, with behavior depending on the resource and runtime.
-- Missing or unrealistic settings can cause poor placement, contention, memory termination, or inefficient capacity use.
+A **StatefulSet** manages workloads that need stable identities and/or stable storage associations, such as certain databases or distributed systems.
 
-For example, if a model server requires 2 CPU cores and 4 GiB of memory to operate well, its resource request should reflect realistic needs rather than be copied blindly from a tutorial.
+Kubernetes storage abstractions include:
+- **PersistentVolume (PV):** a storage resource available to the cluster.
+- **PersistentVolumeClaim (PVC):** a workload's request for storage.
+- **StorageClass:** describes classes of dynamically provisioned storage.
+- **Volume:** storage mounted into a Pod.
 
-### Horizontal Pod Autoscaler (HPA)
+A container's writable layer is not the same as durable storage. If data must survive Pod replacement, design and test persistence explicitly. StatefulSet does not magically make a database highly available or safe; backup, replication, consistency, recovery, and upgrades still matter.
 
-The HPA adjusts the number of replicas of a scalable workload using observed metrics. Common configurations use CPU or memory; custom/external metrics can be used when a metrics pipeline supports them.
+### 6.10 DaemonSet
 
-An HPA is not magic:
-- Metrics need to be available.
-- Targets must reflect the workload.
-- New Pods need capacity to be scheduled.
-- Startup time and readiness behavior affect scaling.
-- Scaling Pods does not always mean the underlying cluster gains more machines automatically; a cluster autoscaler or cloud capacity mechanism may be needed.
+A **DaemonSet** ensures a Pod runs on selected nodes, often for node-level tasks such as log collection, monitoring agents, or networking components.
 
-Official reference: [Horizontal Pod Autoscaling](https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/).
+### 6.11 Custom Resource Definition and Operator
 
-### Cluster scaling
-A node autoscaling component or cloud provider can add/remove worker capacity based on pending workloads and configured rules. Node scaling and Pod scaling are different controls. A Pod can request more replicas while the cluster still lacks resources to schedule them.
+A **Custom Resource Definition (CRD)** extends the Kubernetes API with a new resource type. An **Operator** combines custom resources with controller logic to automate domain-specific operations.
 
-### Scheduling constraints
-Affinity/anti-affinity, topology spread, taints/tolerations, priority, resource requests, and device constraints can influence where workloads run. These are powerful tools, but they can also leave workloads pending if the constraints cannot be satisfied.
+For example, an ML platform might define a custom resource describing a training job. A controller can translate that high-level request into Pods, resource allocation, status reporting, retries, and cleanup. The exact behavior comes from that operator, not from Kubernetes core alone.
 
-## 9. A simple Deployment + Service example
+Official references: [Workloads](https://kubernetes.io/docs/concepts/workloads/), [Custom resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/), [Operators](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/).
 
-This example shows the general shape of deploying a web API. The container image and port must be changed to match your application. It is a learning example, not a production-ready manifest.
+## 7. A first working example: deploy a small web API
+
+This example shows a Deployment and an internal Service. It uses a public demonstration image so you can learn the object relationships. For a real project, replace the image with your own tested image, pin it to an appropriate version or digest, and review image security.
+
+Create a file named `web-demo.yaml`:
 
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: student-api
+  name: web-demo
   labels:
-    app: student-api
+    app: web-demo
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: student-api
+      app: web-demo
   template:
     metadata:
       labels:
-        app: student-api
+        app: web-demo
     spec:
       containers:
-        - name: api
-          image: ghcr.io/example/student-api:1.0.0
+        - name: web
+          image: nginx:1.28
           ports:
             - name: http
-              containerPort: 8000
+              containerPort: 80
           resources:
             requests:
-              cpu: "250m"
-              memory: "256Mi"
+              cpu: "100m"
+              memory: "64Mi"
             limits:
-              cpu: "1"
-              memory: "512Mi"
+              cpu: "500m"
+              memory: "128Mi"
           readinessProbe:
             httpGet:
-              path: /health/ready
+              path: /
               port: http
-            initialDelaySeconds: 3
+            initialDelaySeconds: 2
             periodSeconds: 5
           livenessProbe:
             httpGet:
-              path: /health/live
+              path: /
               port: http
             initialDelaySeconds: 10
             periodSeconds: 10
@@ -325,10 +324,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: student-api
+  name: web-demo
 spec:
   selector:
-    app: student-api
+    app: web-demo
   ports:
     - name: http
       port: 80
@@ -336,448 +335,748 @@ spec:
   type: ClusterIP
 ```
 
-Understand the important lines:
-- `replicas: 2` requests two interchangeable Pods.
-- The label selector connects the Deployment to its Pods and the Service to its backends.
-- `image` identifies the application artifact to run.
-- Resource requests/limits inform placement and constrain resource use.
-- A readiness probe checks whether the application should receive traffic.
-- A liveness probe checks whether Kubernetes should restart an unresponsive container, based on the configured probe.
-- `ClusterIP` makes the Service reachable inside the cluster by default, not directly public.
+The example pins an image tag rather than using `latest`, but for production you should deliberately manage versions and consider digest pinning and image-update policy. Check the current image registry for a valid maintained tag before running this example; image tags change over time.
 
-To try a manifest in a disposable cluster, first ensure the image exists and exposes the expected port and health endpoints. For real production use, add an explicit supported image tag/digest strategy, non-root/security context, appropriate NetworkPolicies, ServiceAccount permissions, secrets, rollout/readiness settings, monitoring, and deployment review.
+### Read the manifest
 
-## 10. Health checks: startup, readiness, liveness
+- `kind: Deployment` asks Kubernetes to manage the application replicas.
+- `replicas: 2` describes the desired count.
+- The Deployment's selector must match the Pod template labels.
+- `image` identifies the container image.
+- `resources.requests` influences scheduling and resource reservation.
+- `resources.limits` places limits on resource use, subject to Kubernetes' resource semantics.
+- `readinessProbe` tells Kubernetes when the container is ready to receive traffic.
+- `livenessProbe` checks whether the process should be restarted if it is unhealthy according to the configured probe.
+- The Service selects the Pods labelled `app: web-demo` and exposes port 80 inside the cluster.
 
-These probes have different meanings:
+### Try it
 
-- **Startup probe:** gives a slow-starting application time to initialize before liveness checks take effect.
-- **Readiness probe:** determines whether a Pod should receive traffic.
-- **Liveness probe:** helps detect a container that is stuck and should be restarted.
-
-Using a liveness check that fails whenever an external dependency is temporarily unavailable may cause unnecessary restarts. A readiness check should reflect whether the app can serve requests; probe design is application-specific. [Official probe guide](https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/).
-
-## 11. Deploying a new version
-
-A typical workflow is:
-
-1. Build and test the application.
-2. Build a container image.
-3. Publish the image to a registry.
-4. Update the Deployment's image/version.
-5. Kubernetes creates new Pods according to the update strategy.
-6. Readiness checks determine when new Pods are suitable for traffic.
-7. Old Pods are gradually removed as the rollout proceeds.
-8. Observe rollout and application health; pause or roll back when necessary.
-
-Commands you will use frequently:
+On a local Kubernetes environment such as kind or Minikube, after installing and selecting the correct cluster context:
 
 ```bash
-kubectl get nodes
-kubectl get pods
+kubectl apply -f web-demo.yaml
 kubectl get deployments
+kubectl get pods -o wide
 kubectl get services
-kubectl describe pod <pod-name>
-kubectl logs <pod-name>
-kubectl apply -f deployment.yaml
-kubectl rollout status deployment/student-api
-kubectl rollout history deployment/student-api
-kubectl rollout undo deployment/student-api
-kubectl get events --sort-by=.metadata.creationTimestamp
+kubectl describe deployment web-demo
+kubectl logs deployment/web-demo
+kubectl port-forward service/web-demo 8080:80
 ```
 
-A rollout rollback can restore a previous Deployment revision, but it cannot automatically undo external database changes or remote side effects. Database migrations should be designed with compatibility and recovery in mind.
+Then visit `http://localhost:8080` while the port-forward command is running.
 
-## 12. Real-life use case 1 — E-commerce website
-
-Imagine a retailer has a storefront, product API, checkout service, inventory service, and background email worker.
-
-A Kubernetes deployment may use:
-- Deployments for stateless storefront/API services.
-- Services for stable internal communication.
-- Gateway API or an external load balancer to accept web traffic.
-- HPA for stateless services whose demand varies, provided metrics and capacity are available.
-- Jobs for one-time backfills or data repair in an isolated workflow.
-- ConfigMaps for non-secret config and a proper secret store for credentials.
-- Monitoring and rollout health checks to detect regressions.
-
-On a festival sale day, request traffic increases. The HPA may increase replicas based on the configured metric, while node autoscaling can add worker capacity if the cluster supports it. A database or payment provider may still be the bottleneck; scaling API Pods alone does not remove every bottleneck.
-
-Kubernetes is useful when the service topology and traffic justify its complexity. A small online store may be more economical on a managed application platform.
-
-## 13. Real-life use case 2 — Video or document processing
-
-Suppose users upload PDFs, images, or videos. Request handlers should not perform hours of work during a single HTTP request. Instead, the system can place a task into a queue and run background workers.
-
-Kubernetes may run:
-- A Deployment for the API.
-- A worker Deployment that consumes queued jobs.
-- Jobs for isolated one-off processing.
-- CronJobs for scheduled cleanup or re-indexing.
-- Persistent object storage for uploaded files and outputs.
-- Metrics-driven scaling of workers based on queue depth, if a supported custom-metrics path exists.
-- Resource limits so a single large document does not consume unbounded memory.
-
-Kubernetes schedules and manages the containers; the queue provides durable task messaging, and object storage persists the files. Kubernetes itself is not the message queue or file store.
-
-## 14. Real-life use case 3 — a production AI chat application
-
-Imagine an AI study assistant that accepts a question, retrieves relevant notes, calls a model, and streams a response.
-
-Possible workloads:
-- Frontend or backend API Deployments.
-- Retrieval service Deployment.
-- Background ingestion Jobs for document parsing and embedding generation.
-- A queue for slow or retryable tasks.
-- A managed database and object storage.
-- A model server or external model API integration.
-- HPA or custom-metric autoscaling for components whose load can be measured meaningfully.
-- Network policy and secrets management to protect internal services and provider credentials.
-
-Kubernetes can help coordinate deployment and operations. It does not make retrieval accurate, improve the model's reasoning, or automatically ensure responses are safe. Those require AI-specific evaluation, design, and monitoring.
-
-## 15. When should you learn Kubernetes—and when should you not?
-
-### Kubernetes becomes valuable when
-- You need multiple related services to run consistently.
-- You need repeatable rollouts and replica management.
-- You have background workers or scheduled Jobs.
-- You need resource requests, limits, and policy-controlled scheduling.
-- You operate containers across nodes or environments.
-- You work in platform engineering, cloud-native DevOps/SRE, or production ML infrastructure.
-- Your team needs a common deployment API across many services.
-
-### Kubernetes may be overkill when
-- You have a single small web application.
-- You are still validating the idea with very low traffic.
-- Your hosting platform already provides deployment, HTTPS, health checks, and scaling with little operations work.
-- You do not have the time or expertise to maintain clusters securely.
-- You have not yet learned containers, HTTP, Linux processes, networking, and basic deployment.
-
-A useful career strategy is to understand what problem Kubernetes solves and build one small app on it after learning Docker and basic deployment. You do not need to start with a complex multi-node cluster.
-
-## 16. Why Kubernetes matters in the AI era
-
-AI workloads are not only web APIs. They may include dataset preparation, scheduled inference, large distributed training, fine-tuning, model serving, GPU allocation, autoscaling, and workflow orchestration.
-
-Kubernetes helps by providing:
-- **Scheduling:** place workloads on nodes that have suitable resources.
-- **Resource declarations:** request CPU, memory, and supported specialized devices.
-- **Batch execution:** run Jobs for preprocessing, evaluation, and other tasks.
-- **Service operation:** manage and expose long-running inference APIs.
-- **Scaling:** adjust replicas or capacity when supported metrics and infrastructure allow.
-- **Isolation and controls:** namespaces, RBAC, network policies, admission controls, and workload security settings.
-- **Extensibility:** operators and custom resources can automate higher-level workflows.
-
-Kubernetes is an infrastructure layer, not an AI platform by itself. Teams often use additional tools:
-- **Kubeflow Pipelines** defines repeatable ML workflows composed of components that run as Pods and other Kubernetes resources. [Official concepts](https://www.kubeflow.org/docs/components/pipelines/concepts/pipeline/).
-- **Kubeflow Trainer** provides Kubernetes-native orchestration for distributed training and fine-tuning across frameworks and GPU resources. [Official overview](https://www.kubeflow.org/docs/components/trainer/overview/).
-- **KServe** provides a Kubernetes-based model-inference platform, including predictive and generative inference deployment modes. [Official admin overview](https://kserve.github.io/website/docs/admin-guide/overview).
-- **Dynamic Resource Allocation (DRA)** provides Kubernetes APIs for requesting and allocating specialized devices such as GPUs or FPGAs. Its availability and feature state depend on the Kubernetes version and device integration. [Kubernetes v1.34 DRA announcement](https://kubernetes.io/blog/2025/09/01/kubernetes-v1-34-dra-updates/).
-- **Workload-aware scheduling** is an evolving area for AI and batch workloads. The Kubernetes v1.37 release blog from September 2026 described Workload and PodGroup APIs, gang scheduling, workload-aware preemption, and composite Pod groups advancing to Beta. Verify current feature gates and support before using these features in production. [Official v1.37 update](https://kubernetes.io/blog/2026/09/08/kubernetes-v1-37-advancing-workload-aware-scheduling/).
-
-### Example: GPU inference service
-
-A team wants to serve a model on GPU nodes.
-
-1. Build a versioned model-serving container image.
-2. Make model weights available through an appropriate storage mechanism.
-3. Use a GPU-enabled cluster and the device plugin/runtime integration required by that hardware.
-4. Request appropriate GPU resources in the workload specification; use the method supported by the cluster.
-5. Configure readiness/health checks, resource budgets, and safe rollout policy.
-6. Expose only the intended inference endpoint.
-7. Measure latency, throughput, queueing, GPU utilization, and errors.
-8. Scale based on measured demand and available GPU capacity.
-9. Keep credentials, model artifacts, and data access under least-privilege controls.
-
-Having Kubernetes does not mean GPUs are automatically available or that model serving is automatically efficient. The hardware drivers, device integration, model runtime, memory requirements, batching, scheduling and cost all matter.
-
-### Example: model-training pipeline
-
-A workflow might:
-1. Validate incoming dataset metadata.
-2. Preprocess and tokenize data in batch Jobs.
-3. Start a distributed training job.
-4. Evaluate the resulting model against a benchmark.
-5. Store the artifact and metrics.
-6. Register the candidate model only if the quality gate passes.
-7. Deploy it to staging for inference evaluation.
-
-Kubernetes can schedule and manage the containers/jobs. Kubeflow Pipelines or another workflow system can express step dependencies and artifacts. Experiment tracking and model registry may come from separate tools. Each component has a distinct responsibility.
-
-### AI era: should every AI developer learn Kubernetes?
-
-No. If you are primarily exploring models in notebooks or using managed model APIs, you can make valuable AI applications without operating Kubernetes.
-
-Learn Kubernetes when your work moves toward:
-- Hosting inference services yourself.
-- Operating distributed training or fine-tuning.
-- Scheduling GPU workloads.
-- Serving several AI-related services reliably.
-- Building data/ML pipelines that need containerized execution.
-- Working in ML platform engineering, MLOps, infrastructure, or production engineering.
-
-Even if managed services hide the cluster from you, the concepts of resource allocation, health, scaling, networking, rollout, observability and access control remain useful.
-
-## 17. Kubernetes security basics
-
-Kubernetes gives you powerful automation; a poorly configured cluster can also magnify a mistake.
-
-Start with these principles:
-
-- **Least privilege:** grant a workload only the API permissions it needs. Use RBAC roles and service accounts intentionally.
-- **Protect Secrets:** enable encryption at rest where required, restrict who can read/create Pods and Secrets, mount credentials only where needed, and consider an external secrets provider.
-- **Use non-root containers:** avoid privileged containers unless a clearly justified requirement exists.
-- **Apply Pod Security Standards:** consider the Baseline or Restricted profile where compatible, instead of leaving everything privileged.
-- **Control network paths:** use NetworkPolicies where the network implementation enforces them; declare intended communication.
-- **Use trusted images:** pin and scan images, track provenance where available, and update vulnerable dependencies.
-- **Keep API access secure:** protect control-plane credentials and avoid broad cluster-admin access.
-- **Separate environments:** use appropriate namespace, cluster, and identity boundaries.
-- **Set resource limits:** reduce the impact of faulty or abusive workloads.
-- **Audit and monitor:** inspect events, logs, metrics, configuration changes, and access patterns.
-- **Plan recovery:** test backups and restore procedures for stateful data and critical configuration.
-
-Important nuance: Kubernetes Secrets are not automatically encrypted at rest by default in every configuration. The official documentation recommends encryption at rest, least-privilege RBAC, limiting Secret access, and considering external Secret stores. [Official Secret guidance](https://kubernetes.io/docs/concepts/configuration/secret/). Also review the [Kubernetes security overview](https://kubernetes.io/docs/concepts/security/), [RBAC good practices](https://kubernetes.io/docs/concepts/security/rbac-good-practices/), and [Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/).
-
-## 18. Common mistakes beginners make
-
-1. **Learning Kubernetes before Docker and Linux basics.** Start with processes, ports, images, containers, and HTTP.
-2. **Thinking a Pod is permanent.** Design for replacement; persist needed data outside ephemeral container filesystems.
-3. **Using `latest` tags without an image strategy.** Make releases traceable and repeatable.
-4. **Putting passwords in a Docker image, source code, or ConfigMap.** Use appropriate secret management.
-5. **Exposing every Service externally.** Keep internal APIs internal and explicitly configure entry points.
-6. **Ignoring resource requests and limits.** Poor settings affect scheduling, performance, and noisy-neighbor behavior.
-7. **Using liveness probes as dependency checks.** A temporary database outage should not necessarily cause every API container to restart.
-8. **Assuming HPA adds machines.** HPA changes workload replicas; cluster capacity may require separate autoscaling.
-9. **Assuming an Ingress object works by itself.** A suitable controller is required; evaluate Gateway API for new designs.
-10. **Running a stateful database in Kubernetes without a backup plan.** Persistence, replication, upgrades, and restore need a deliberate design.
-11. **Treating Kubernetes as a CI/CD tool.** It runs and manages workloads; a pipeline usually builds/tests/publishes artifacts and invokes deployment.
-12. **Starting with a large production-like cluster for a tiny student project.** Learn the core objects locally, then add complexity as the need becomes real.
-13. **Believing Kubernetes makes a system automatically highly available.** Application design, replica placement, dependencies, data replication, capacity, and monitoring still determine reliability.
-14. **Ignoring cloud costs.** Idle node pools, GPUs, load balancers, disks, and observability can create significant cost.
-
-## 19. How to learn Kubernetes step by step
-
-### Stage 0 — prerequisites
-Understand:
-- Linux processes and files.
-- Basic networking, IP addresses, DNS, HTTP, ports.
-- Git.
-- What a container image and container are.
-- Environment variables and application configuration.
-- Basic YAML.
-
-### Stage 1 — Docker and one application
-Create a small API, package it in an image, and run it locally. Learn ports, environment variables, logs, and container exit status.
-
-### Stage 2 — local Kubernetes
-Use a local cluster tool such as kind or minikube. Understand that local clusters still run real Kubernetes components, but resource constraints and some cloud integrations differ from managed production clusters.
-
-### Stage 3 — core resources
-Create a Namespace, Deployment, Service, and ConfigMap. Inspect Pods, logs, Events, and rollout status. Change the image version and observe rollout behavior.
-
-### Stage 4 — health and resource control
-Add readiness/liveness/startup probes where appropriate, resource requests/limits, and safe termination behavior. Observe why a Pod can be Running but not Ready.
-
-### Stage 5 — networking and external access
-Make one service internally reachable, then expose it through an appropriate local ingress/gateway or LoadBalancer implementation. Study DNS and NetworkPolicy.
-
-### Stage 6 — persistence and background work
-Run a Job and CronJob. Understand persistent volumes and storage claims. Do a controlled experiment where a Pod is replaced and observe what data persists.
-
-### Stage 7 — security
-Create a ServiceAccount and narrowly scoped RBAC Role/RoleBinding. Practise Secrets safely with fake credentials. Explore non-root containers, Pod Security Standards, and network restrictions.
-
-### Stage 8 — observability and deployment automation
-Automate checks and image build with CI, deploy a versioned artifact, track rollout status, inspect metrics/logs, and test a rollback or recovery path.
-
-### Stage 9 — AI/ML extension
-Containerize a simple inference API or a batch evaluation job. Only after learning the core, explore Kubeflow Pipelines, Kubeflow Trainer, KServe, and GPU scheduling.
-
-## 20. Practical projects to prove your understanding
-
-### Project A — containerized REST API
-- Build a small Python API.
-- Add health endpoints and tests.
-- Build an image and run it locally.
-- Deploy it to a local Kubernetes cluster using a Deployment and Service.
-- Change the image and watch a rollout.
-
-**You learn:** images, Pods, Deployments, Services, YAML, rollout mechanics.
-
-### Project B — scalable background worker
-- Create an API that adds tasks to a queue.
-- Run the worker as a Deployment.
-- Define CPU/memory requests/limits.
-- Add HPA when the metrics path is configured.
-- Measure queue depth and throughput before choosing an autoscaling signal.
-
-**You learn:** asynchronous work, scaling, resource allocation, and metrics.
-
-### Project C — secure multi-service application
-- Deploy frontend and API separately.
-- Keep the database private.
-- Configure a ServiceAccount and minimum RBAC permissions.
-- Use a fake secret through a proper Secret/external secret mechanism.
-- Add NetworkPolicy and verify it is enforced in your cluster.
-
-**You learn:** service discovery, configuration, identity, and network controls.
-
-### Project D — scheduled ML evaluation
-- Create a container that evaluates a small model on a dataset.
-- Run it as a Job or CronJob.
-- Store versioned output artifacts outside the ephemeral container filesystem.
-- Make failures and exit status visible.
-- Run a quality gate before a report is accepted.
-
-**You learn:** batch workloads, reproducibility, job lifecycle, and MLOps basics.
-
-### Project E — model inference service
-- Containerize a small inference API.
-- Deploy with resource requests and health probes.
-- Keep model API credentials out of images and Git.
-- Measure latency, throughput, errors and memory use.
-- Add replicas only after understanding bottlenecks.
-- Explore KServe only after ordinary Kubernetes deployment is clear.
-
-**You learn:** serving, resource management, safe rollout, observability, and AI infrastructure.
-
-## 21. Important commands to know
+Clean up:
 
 ```bash
-# Cluster and context
-kubectl config get-contexts
-kubectl config current-context
-kubectl get nodes
+kubectl delete -f web-demo.yaml
+```
 
-# Resources
-kubectl get namespaces
+Only run commands against a cluster you intend to modify. Always inspect `kubectl config current-context` before applying manifests, especially if you have access to production clusters.
+
+## 8. What happens when you deploy a manifest?
+
+Suppose you run `kubectl apply -f web-demo.yaml`.
+
+1. **kubectl reads the file** and sends the desired resources to the Kubernetes API server.
+2. **The API server authenticates and authorizes the request**, validates the objects, and applies relevant admission controls.
+3. **The API stores the accepted state** in the cluster's backing store.
+4. **Controllers notice the Deployment** and create or update a ReplicaSet, which requests the desired Pods.
+5. **The scheduler selects nodes** that satisfy the Pod's scheduling constraints and resource requests.
+6. **The kubelet on each selected node observes the assigned Pod** and instructs the container runtime to pull the image and start containers.
+7. **Networking and storage components configure what the Pod needs**, depending on the cluster setup and manifest.
+8. **The kubelet reports status and probe results.** The Service's endpoint information reflects eligible backends according to cluster behavior.
+9. **You inspect the outcome** with `kubectl get`, `describe`, and `logs`.
+
+These steps are asynchronous. A successful `kubectl apply` means the API accepted the desired resource configuration; it does **not** guarantee the application is already running or healthy. Check status and investigate events.
+
+## 9. Scheduling: how Kubernetes decides where Pods run
+
+The scheduler considers resource requests, node capacity, scheduling constraints, taints and tolerations, affinity rules, and other policies.
+
+### CPU and memory requests vs limits
+
+- **Request:** the amount used for scheduling and resource planning.
+- **Limit:** the maximum resource use enforced according to the resource type and runtime behavior.
+
+For CPU, a limit can throttle a container. For memory, exceeding the limit can result in the container being terminated (often observed as an OOM kill). Requests that are too low or too high can both cause problems: low requests can contribute to contention; high requests can leave capacity unusable.
+
+### Labels, selectors, affinity, and taints
+
+- **Labels:** key-value metadata attached to objects.
+- **Selectors:** choose objects matching labels.
+- **Node affinity / pod affinity:** express placement preferences or constraints.
+- **Taints and tolerations:** keep workloads away from nodes unless the workload tolerates the relevant taint.
+
+These features can separate general API workloads from specialized GPU nodes, isolate noisy batch workloads, or keep certain system services on appropriate machines. Placement rules should be as simple as the real requirement allows; overly strict constraints can leave Pods pending.
+
+### GPU scheduling
+
+Kubernetes can schedule supported GPU resources through device plugins and appropriate vendor drivers. Once a GPU device plugin advertises a resource, a Pod can request that resource. Different hardware may require labels, node selectors, affinity, or specialized scheduling policy.
+
+Kubernetes schedules the resource; it does not automatically install all GPU drivers, optimize your model, or guarantee maximum utilization. See the official [GPU scheduling guide](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/).
+
+## 10. Health checks: readiness, liveness, and startup
+
+These probes answer different questions.
+
+- **Readiness:** should this Pod receive traffic right now?
+- **Liveness:** should Kubernetes restart this container because it appears stuck or unhealthy?
+- **Startup:** has a slow-starting application completed startup yet?
+
+A poorly designed liveness probe can create restart loops. For example, if an application temporarily waits for a slow dependency and the liveness check treats that delay as a fatal failure, Kubernetes may repeatedly restart a process that could otherwise recover.
+
+Readiness should reflect whether the instance can serve requests. Liveness should generally detect a failure the process cannot recover from on its own. Startup probes can protect slow initialization from premature liveness failures.
+
+Reference: [Configure liveness, readiness, and startup probes](https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/).
+
+## 11. Scaling and availability
+
+### Replicas and horizontal scaling
+
+A Deployment can run several Pods. Multiple replicas help distribute load and replace failed instances, provided the cluster has capacity and the application is designed to run concurrently.
+
+The **Horizontal Pod Autoscaler (HPA)** adjusts replica count based on observed metrics, commonly CPU or memory utilization and, with suitable metrics adapters, application-specific metrics. HPA does not create unlimited machines. If the cluster has no capacity, Pods may remain pending unless node capacity can also grow.
+
+A **Cluster Autoscaler** or cloud-specific node autoscaling mechanism can adjust the number of worker nodes, depending on the environment. Pod autoscaling and node autoscaling solve different problems and can work together.
+
+### Rollouts and rollbacks
+
+Deployments can gradually replace old Pods with new ones. You can monitor status and, when appropriate, roll back to an earlier revision. A rollback is not a complete recovery plan if the release also performed an irreversible database migration or changed external data.
+
+### Availability needs more than replicas
+
+Three Pods on one machine do not protect against that machine failing. High availability may require multiple nodes, failure-domain distribution, redundant infrastructure, working health checks, external dependency resilience, backups, and a recovery plan. Kubernetes provides mechanisms; your architecture determines the actual resilience.
+
+References: [Deployments](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/), [Horizontal Pod Autoscaling](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/).
+
+## 12. Networking: how applications communicate
+
+Kubernetes networking has multiple layers:
+
+1. **Pod networking:** Pods communicate through cluster networking, subject to the CNI and network policies.
+2. **Service discovery:** a Service gives a stable virtual address and DNS name for a selected set of backends.
+3. **External entry:** a LoadBalancer, Ingress controller, Gateway API implementation, or another supported setup routes traffic from outside the cluster.
+4. **Egress:** workloads may call databases, model APIs, storage, and other external services; network rules and policies determine what is allowed.
+
+Example: a frontend may call `http://backend.default.svc.cluster.local` to reach a Service named `backend` in the `default` namespace, subject to cluster DNS and networking configuration.
+
+A NetworkPolicy can express allowed ingress and egress patterns, but enforcement depends on the cluster's network implementation. Defining a policy in a cluster that does not enforce it does not provide the intended protection.
+
+Reference: [Kubernetes networking concepts](https://kubernetes.io/docs/concepts/services-networking/).
+
+## 13. Storage and databases
+
+Kubernetes can connect workloads to persistent storage through PVs, PVCs, and StorageClasses. A workload can request a volume without hard-coding every provider-specific storage detail.
+
+However, running a database inside Kubernetes is not automatically the best choice. Consider:
+- Do you have a reliable backup and restore process?
+- How are upgrades and schema changes handled?
+- What is the recovery point and recovery time objective?
+- How will replication and consistency work?
+- Who owns database operations and incident response?
+- Would a managed database reduce operational risk?
+
+For many student projects and small production apps, a managed database outside the cluster may be simpler. Kubernetes can still run the API and background workers that use it.
+
+## 14. Configuration and secrets safely
+
+Keep non-sensitive environment-specific settings in configuration. Keep passwords, API keys, certificates, and tokens in a proper secrets-management workflow.
+
+Practical rules:
+- Never commit real secrets into Git.
+- Do not bake secrets into container images.
+- Avoid exposing secret values in logs, traces, command output, or screenshots.
+- Restrict Secret read access with RBAC.
+- Configure encryption at rest where required and available.
+- Use workload identity or short-lived credentials where supported instead of long-lived cloud keys.
+- Separate development and production credentials.
+- Rotate credentials after suspected exposure.
+- Consider a cloud secret manager and a maintained integration when it fits your platform.
+
+Kubernetes Secrets are API objects, not magic encryption. The security of a Secret depends on cluster configuration, storage encryption, authorization, and how applications consume it.
+
+References: [Secrets](https://kubernetes.io/docs/concepts/configuration/secret/), [RBAC good practices](https://kubernetes.io/docs/concepts/security/rbac-good-practices/).
+
+## 15. Security: what a production-minded engineer checks
+
+A Kubernetes deployment expands the set of things that must be secured: API access, worker nodes, container images, workload identities, secrets, network paths, admission policy, and the software itself.
+
+A practical checklist:
+
+- Use supported Kubernetes versions and plan upgrades.
+- Give users and service accounts only the permissions they need.
+- Avoid giving application Pods cluster-admin privileges.
+- Prefer non-root containers where feasible.
+- Set appropriate security contexts and avoid unnecessary Linux capabilities.
+- Use trusted, maintained images and scan dependencies and images.
+- Avoid privileged containers unless there is a justified, tightly controlled requirement.
+- Apply Pod Security Standards or equivalent admission policy.
+- Restrict network access with NetworkPolicy where the CNI enforces it.
+- Protect the API endpoint and control-plane credentials.
+- Store and rotate secrets properly.
+- Monitor audit events and relevant workload activity.
+- Back up required persistent data and test recovery.
+- Treat manifests, Helm charts, and infrastructure code as code that requires review.
+
+A cluster's security posture depends on its environment and threat model. Follow the managed provider's hardening guidance if you use a cloud service.
+
+References: [Kubernetes security](https://kubernetes.io/docs/concepts/security/), [Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/).
+
+## 16. Observability and troubleshooting
+
+When a workload fails, start by asking what state Kubernetes reports before changing things at random.
+
+Useful commands:
+
+```bash
+kubectl get nodes
 kubectl get pods -A
 kubectl get deployments
 kubectl get services
-kubectl get jobs
-kubectl get cronjobs
+kubectl get events --sort-by=.metadata.creationTimestamp
+kubectl describe pod <pod-name>
+kubectl logs <pod-name>
+kubectl logs <pod-name> --previous
+kubectl get pod <pod-name> -o yaml
+kubectl top pods
+kubectl top nodes
+```
 
-# Inspect a resource and why it is unhealthy
+Some commands require metrics-server or other components to be installed. Replace placeholders such as `<pod-name>` with real resource names.
+
+### Common failure states
+
+| Symptom | What it often means | First checks |
+|---|---|---|
+| `Pending` | Pod has not been scheduled or is waiting on a dependency such as storage | `kubectl describe pod`, events, node capacity, PVC state |
+| `ImagePullBackOff` | Image could not be pulled, and retries are backing off | Image name/tag, registry access, image pull credentials |
+| `CrashLoopBackOff` | Container repeatedly exits and restart attempts are backing off | Current and previous logs, exit code, command, config, probes |
+| `OOMKilled` | Container was terminated after memory pressure/limit exceedance | Memory usage, limit, leak or workload spike, node pressure |
+| Service has no working backends | Service selector or Pod readiness may not match | Service selector, Pod labels, EndpointSlices, readiness |
+| `Running` but app doesn't respond | Process may be unhealthy, wrong port, routing issue, or dependency failure | Logs, probes, container port, Service targetPort, network rules |
+| Pods remain pending after scale-up | Insufficient schedulable capacity or restrictive placement rules | Requests, node capacity, taints, affinity, quotas, autoscaler |
+
+Useful mental model: **observe → inspect events and logs → form a hypothesis → change one thing → verify**. Avoid deleting resources as the first response when you have not collected evidence.
+
+## 17. Helm, Kustomize, GitOps, and operators
+
+These are related but distinct ecosystem tools and patterns.
+
+- **Helm:** packages and installs Kubernetes applications using charts with configurable values.
+- **Kustomize:** customizes Kubernetes manifests using overlays without requiring a templating language.
+- **GitOps:** keeps desired configuration in version control and uses a reconciler to apply it to an environment. Tools such as Argo CD and Flux are commonly associated with this approach.
+- **Operators:** encode application-specific operational knowledge in controllers and custom resources.
+
+For a beginner, start by reading and applying plain YAML manifests. Learn how labels, selectors, Pods, Deployments, Services, and probes work before relying on large charts or operators you cannot yet troubleshoot.
+
+## 18. Kubernetes in the AI era (2026)
+
+Kubernetes is relevant to AI because AI applications are not just model calls. Production AI systems can include APIs, model servers, embedding workers, retrieval pipelines, databases, object storage, evaluation jobs, asynchronous queues, observability, and GPU-backed workloads.
+
+Kubernetes offers a common way to schedule and operate many of those components. It is **not required for every AI application**, and it does not make a model smarter by itself.
+
+### 18.1 Hosting an AI inference API
+
+Imagine you fine-tune or download a model and wrap it in an HTTP API.
+
+Kubernetes can:
+- Run multiple inference replicas.
+- expose them through a Service and a supported gateway.
+- allocate CPU, memory, and GPU resources.
+- roll out a new model-serving image.
+- restart failed instances and report health.
+- scale replicas based on configured metrics.
+
+But model startup time, GPU memory, batching, request queues, cold starts, and inference latency need workload-specific engineering. Autoscaling on CPU alone may be a poor signal for GPU inference; teams may need metrics such as queue depth, concurrent requests, GPU utilization, or latency, along with a suitable autoscaling mechanism.
+
+### 18.2 Running scheduled data and ML jobs
+
+An ML workflow may need to:
+1. Validate incoming data.
+2. Run preprocessing.
+3. Train or fine-tune a model.
+4. Evaluate it against a baseline.
+5. Store the resulting artifact.
+6. Register or promote the model only if quality gates pass.
+
+Kubernetes Jobs and CronJobs can run finite and scheduled tasks. Higher-level tools can coordinate dependencies, artifacts, retries, and workflow metadata. Use the simplest orchestration that satisfies the workload; a collection of Jobs alone is not a complete ML pipeline system.
+
+### 18.3 Distributed training and fine-tuning
+
+Large training or fine-tuning tasks may span multiple machines and GPUs. Kubernetes can allocate the underlying cluster resources and coordinate Pods, while specialized training frameworks/operators handle distributed execution, worker coordination, rendezvous, and related details.
+
+The relevant ecosystem includes:
+- **Kubeflow:** modular, Kubernetes-native tooling for data and AI workflows.
+- **Kubeflow Trainer:** Kubernetes-native APIs and operators for scalable training and distributed AI workloads.
+- **KServe:** Kubernetes-native model serving abstractions for supported inference workloads.
+- **GPU device plugins:** expose supported accelerator resources to the scheduler.
+- **Queueing and scheduling extensions:** help manage shared, scarce GPU capacity in some environments.
+
+These tools are not all built into Kubernetes. They add higher-level capabilities and introduce their own installation, compatibility, operational, and security considerations.
+
+References: [Kubeflow introduction](https://www.kubeflow.org/docs/started/introduction/), [Kubeflow Trainer](https://www.kubeflow.org/docs/components/trainer/overview/), [KServe](https://kserve.github.io/website/docs/intro), [Kubernetes GPU scheduling](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/).
+
+### 18.4 Hosting AI agents and tool backends
+
+An AI agent application may contain:
+- A user-facing web app.
+- An agent API/orchestrator.
+- A queue for long-running tasks.
+- Tool adapters for GitHub, documents, or business systems.
+- A database for task state.
+- A model-provider API connection.
+- Workers that execute jobs.
+- Logs, traces, and policy checks.
+
+Kubernetes can run and scale these components separately. For example, a queue-backed worker pool can add replicas when work accumulates. A long-running task should not necessarily occupy a web request process for its entire lifetime.
+
+However, Kubernetes is not an agent-security system. It does not automatically decide whether an agent is allowed to delete a file, read a secret, or call a tool. Enforce tool permissions, workload identities, network restrictions, approval gates, audit logs, sandboxing, and resource limits at the appropriate layers.
+
+### 18.5 Serving retrieval-augmented generation (RAG)
+
+A RAG application might use:
+- An API that accepts a question.
+- An embedding service or external embedding API.
+- A retrieval service and vector database.
+- Object storage for source documents.
+- A model provider or self-hosted model.
+- Background ingestion workers.
+
+Kubernetes can run the API and workers and provide service discovery and rollout management. The vector database may be managed externally or run in the cluster depending on operational requirements. Kubernetes does not determine retrieval quality; chunking, embedding choice, indexing, evaluation, permissions, and source quality remain application responsibilities.
+
+### 18.6 Why AI makes infrastructure skills valuable
+
+As AI coding tools make it easier to generate application code, engineers still need to understand:
+- How a service is packaged and deployed.
+- Why it fails to start.
+- How it gets configuration and secrets.
+- How CPU, memory, storage, and GPUs are allocated.
+- How to measure latency, throughput, errors, and cost.
+- How to release a new model without breaking users.
+- How to isolate workloads and restrict access.
+- How to recover from a failed rollout.
+
+Kubernetes is one way to learn these production concerns. It is especially valuable if you aim toward platform engineering, cloud infrastructure, MLOps, ML platform engineering, or production AI systems. It is not a substitute for programming, algorithms, ML fundamentals, databases, networking, or testing.
+
+## 19. Real-world scenarios: when Kubernetes is useful
+
+These are illustrative architectures, not claims about a particular company’s internal infrastructure.
+
+### Scenario A — E-commerce site during a sale
+
+**Problem:** Traffic rises sharply during a seasonal sale. A single application process becomes overloaded.
+
+**Possible design:**
+- Several web/API replicas behind a Service.
+- An external gateway/load balancer routes incoming traffic.
+- HPA scales replicas using appropriate metrics.
+- Node autoscaling adds capacity when the cluster can expand.
+- A queue and worker pool handle order emails or non-interactive work.
+- Monitoring tracks latency, error rates, queue depth, and saturation.
+
+**Why Kubernetes helps:** it provides workload scheduling, replica management, service discovery, and scaling mechanisms.
+
+**What it does not solve alone:** database bottlenecks, poor caching, payment provider outages, unsafe retry logic, or insufficient capacity in a cloud account. Scaling the API can even worsen database overload if the architecture is not designed carefully.
+
+### Scenario B — A clinic appointment system
+
+**Problem:** A clinic wants to deploy a booking API, staff dashboard, notification worker, and scheduled reminders.
+
+**Possible design:**
+- API and dashboard as Deployments.
+- Notification work processed by queue-backed workers.
+- A CronJob for scheduled reminders, designed to avoid duplicate messages.
+- A managed database for appointments.
+- Secrets for external messaging credentials.
+- Role-based access, audit logging, backups, and restricted network access.
+
+**Why Kubernetes helps:** different components can be deployed and scaled separately, and scheduled work can be managed using familiar APIs.
+
+**Important caveat:** healthcare data introduces privacy and compliance obligations. Kubernetes does not make the application compliant by default; the whole system, provider configuration, data handling, and operational procedures must be assessed.
+
+### Scenario C — AI document assistant for tenders
+
+**Problem:** Users upload tender PDFs and ask questions about eligibility, mandatory documents, and deadlines.
+
+**Possible design:**
+1. The frontend sends a file to a controlled upload API.
+2. The API stores the document in object storage and creates a processing task.
+3. A queue-backed worker extracts text and page-level evidence.
+4. An embedding worker indexes passages.
+5. A query API retrieves evidence and generates a structured answer.
+6. A database stores task status and results.
+7. Monitoring tracks processing time, failures, queue backlog, and model/API errors.
+
+**Where Kubernetes fits:** it can run the API, workers, scheduled cleanup, and supporting services. If PDF processing spikes, workers may scale independently of the user-facing API.
+
+**What needs extra design:** file-type validation, size limits, malware handling, tenant isolation, retention policy, prompt-injection defenses for uploaded documents, evidence citations, model evaluation, and cost limits. Kubernetes is infrastructure—not the tender-compliance logic.
+
+### Scenario D — Model-training platform shared by a team
+
+**Problem:** Multiple students or ML engineers want to run experiments, but GPUs are limited and workloads compete.
+
+**Possible design:**
+- A GPU-enabled node pool with vendor drivers and device plugins.
+- Training workloads that declare GPU, CPU, and memory needs.
+- Queueing or quotas so one experiment cannot consume all capacity.
+- Persistent or object storage for datasets and model artifacts.
+- Jobs or Kubeflow Trainer for training.
+- Evaluation gates before a model is promoted.
+- Metrics and logs to diagnose failures and utilization.
+
+**Why Kubernetes helps:** it provides a shared scheduling and resource-management layer and can support reproducible, automated training workloads.
+
+**What needs extra design:** distributed-training configuration, GPU memory, data locality, expensive idle accelerators, checkpoint recovery, and fair scheduling. A single student with a laptop GPU probably does not need a cluster for ordinary experiments.
+
+### Scenario E — AI coding-agent service
+
+**Problem:** A web service accepts a development task, starts a worker, runs tests, and returns a patch or report.
+
+**Possible design:**
+- API Deployment accepts tasks.
+- Queue holds work that should not block HTTP requests.
+- Worker Pods run isolated task containers.
+- A controller or job runner tracks status and timeout.
+- Logs and artifacts are stored separately.
+- Resource quotas limit CPU, memory, execution time, and parallel tasks.
+
+**Why Kubernetes helps:** worker jobs can be created, tracked, and scaled, and resource limits can be applied consistently.
+
+**Critical security point:** untrusted code execution requires strong isolation and carefully restricted credentials/network access. A normal Pod is not automatically a complete security sandbox. Use an appropriate sandboxing design, keep privileges narrow, and do not expose production secrets to untrusted task code.
+
+## 20. When should you use Kubernetes—and when should you not?
+
+### Kubernetes may be a good fit when:
+- You operate multiple services or many replicas.
+- You need standardized deployment and operations across teams/environments.
+- You have variable workload demand and need orchestration.
+- You run batch jobs or distributed workloads.
+- You need consistent workload APIs across supported cloud/on-premises environments.
+- You have operational capacity to manage the cluster or use a managed offering.
+- The benefits of the platform outweigh its cost and complexity.
+
+### Kubernetes may be unnecessary when:
+- You are learning Python or building your first API.
+- You have one small website or a simple prototype.
+- A serverless or managed app platform meets the requirement.
+- A single VM and a well-managed process is sufficient.
+- Your team cannot justify the operational burden.
+- You have not yet validated whether the product solves a real problem.
+
+For a first-year student, don't put Kubernetes in front of every project just to make the architecture look advanced. First build an application, test it, deploy it simply, and understand its real constraints. Add Kubernetes when you can explain what problem it solves in that project.
+
+## 21. Kubernetes vs Docker vs serverless
+
+| Technology | Main job | Best way to think about it |
+|---|---|---|
+| Docker / container tooling | Build and run container images | Package and run an application consistently |
+| Kubernetes | Orchestrate containerized workloads across a cluster | Keep workloads running and coordinate resources, networking, rollout, and scaling |
+| Serverless app platform | Run application code without requiring you to manage a full cluster | Deploy a service with less infrastructure management |
+| Virtual machine (VM) | Provide a virtualized machine environment | Manage an operating-system-level runtime environment |
+| Managed container service | Run containers with varying levels of infrastructure abstraction | Use containers without necessarily managing Kubernetes directly |
+
+These options overlap. A managed serverless container platform may be simpler for a small API; Kubernetes can be preferable when you need its broader workload model and control. Compare operational burden, cost, portability, scaling behavior, networking, security, and team skills—not hype.
+
+## 22. Kubernetes vs DevOps vs MLOps
+
+- **Kubernetes** is a platform for orchestrating workloads.
+- **DevOps** is a broader approach to shared ownership and reliable software delivery/operations.
+- **MLOps** applies operational practices to machine-learning systems, including model/data versioning, evaluation, deployment, and monitoring.
+
+A team can practise DevOps without Kubernetes. A team can use Kubernetes without having a mature DevOps culture. MLOps can use Kubernetes, managed cloud services, or simpler infrastructure depending on the workload.
+
+Related guide in this repository: [DevOps](../devops/README.md).
+
+## 23. The command-line tool: kubectl
+
+`kubectl` is the standard command-line tool for interacting with a Kubernetes API server.
+
+Common commands:
+
+```bash
+# Context and cluster
+kubectl config get-contexts
+kubectl config current-context
+kubectl cluster-info
+kubectl get nodes
+
+# Workloads and services
+kubectl get deployments
+kubectl get pods -o wide
+kubectl get services
+kubectl get jobs
+kubectl get namespaces
+
+# Understand failures
 kubectl describe pod <pod-name>
 kubectl get events --sort-by=.metadata.creationTimestamp
 kubectl logs <pod-name>
 kubectl logs <pod-name> --previous
 
-# Apply and validate changes
-kubectl apply -f ./k8s/
-kubectl diff -f ./k8s/
-kubectl rollout status deployment/student-api
-kubectl rollout history deployment/student-api
-kubectl rollout undo deployment/student-api
+# Change and verify a manifest
+kubectl diff -f web-demo.yaml
+kubectl apply -f web-demo.yaml
+kubectl rollout status deployment/web-demo
+kubectl rollout history deployment/web-demo
 
-# Execute/debug in a container (only where authorized)
-kubectl exec -it <pod-name> -- /bin/sh
-
-# Resource and scaling views
-kubectl top pods
-kubectl top nodes
-kubectl get hpa
+# Port-forward and cleanup
+kubectl port-forward service/web-demo 8080:80
+kubectl delete -f web-demo.yaml
 ```
 
-A few cautions:
-- `kubectl top` requires a suitable metrics pipeline, commonly Metrics Server.
-- Not every container image includes `/bin/sh`; minimal images may intentionally omit a shell.
-- The active Kubernetes context matters. Before applying or deleting resources, verify the current cluster and namespace.
-- Use `kubectl delete` carefully, especially in shared/production environments.
-- Commands may require different parameters depending on the resource and cluster configuration.
+Before applying or deleting resources, confirm the current context and namespace. Commands can affect real environments. Do not copy production commands into a terminal without understanding their scope.
 
-## 22. Kubernetes vs Docker vs cloud services
+Reference: [kubectl reference](https://kubernetes.io/docs/reference/kubectl/).
 
-| Technology | Main job |
-|---|---|
-| Docker / image tools | Build and run container images in local/development workflows |
-| Kubernetes | Coordinate containerized workloads across a cluster |
-| Managed container platform (for example, a serverless container service) | Run application containers while the provider abstracts more infrastructure |
-| Virtual machines | Provide general-purpose compute machines and operating-system environments |
-| Terraform / IaC | Provision cloud and infrastructure resources through declared configuration |
-| CI/CD system | Build, test, package, and release changes |
-| Observability tools | Collect and analyze logs, metrics, traces, and alerts |
-| Kubeflow / KServe | Add ML workflow/training/model-serving capabilities on Kubernetes |
+## 24. A staged learning roadmap
 
-These tools can complement one another. In some cases a managed serverless/container service is the better choice because the team does not need Kubernetes' degree of control.
+Learn Kubernetes after you can build and run a simple application. This sequence avoids memorizing YAML without understanding the system.
 
-## 23. Glossary
+### Stage 1 — foundations
+Learn:
+- Linux processes and command line.
+- Git and basic networking (HTTP, ports, DNS).
+- How a web server starts and listens on a port.
+- Environment variables and configuration.
+- Docker images and containers.
 
-- **Cluster:** control plane plus worker nodes that run workloads.
-- **Control plane:** components that expose the API and manage desired state.
-- **Node:** a machine capable of running Pods.
-- **Pod:** smallest deployable unit; one or more cooperating containers.
-- **Deployment:** declarative management for stateless replicas and rollouts.
-- **Replica:** one running instance of a workload template.
-- **Service:** stable endpoint for selected Pods.
-- **Namespace:** logical grouping of resources and a scope for many policies.
-- **Ingress:** Kubernetes API for HTTP/HTTPS routing; its API is frozen, and Gateway API is the newer direction for evolving routing features.
-- **Gateway API:** APIs for more expressive traffic routing, with implementation provided by a controller/gateway.
-- **ConfigMap:** non-secret configuration.
-- **Secret:** object intended for confidential data; needs appropriate encryption/access controls.
-- **PV/PVC:** storage resource and a workload's request for storage.
-- **HPA:** controller/API that changes replica count based on metrics.
-- **Request/limit:** declared resource needs and supported caps for a container.
-- **Job/CronJob:** run-to-completion task / scheduled task.
-- **CRD:** extends the Kubernetes API with a new resource kind.
-- **Operator:** controller that automates a specialised application's lifecycle.
-- **CNI:** common term for the container network integration layer used by a cluster.
-- **CSI:** common term for the container storage integration layer.
-- **RBAC:** role-based access control.
-- **Pod Security Standards:** graduated profiles for workload security.
-- **Helm:** package manager commonly used to distribute/configure Kubernetes applications.
-- **Kustomize:** tool for customizing Kubernetes YAML resources.
-- **GitOps:** workflow in which version-controlled declarations are reconciled into environments by automation.
-- **MLOps:** operational practices for the ML lifecycle, including data/model evaluation, deployment, and monitoring.
+**Checkpoint:** build an API image and run it locally; explain its port, environment, and logs.
 
-## 24. Recommended official resources
+### Stage 2 — local cluster
+Choose one local learning environment, such as kind or Minikube, and learn:
+- Cluster and node.
+- Pod.
+- Deployment.
+- Labels and selectors.
+- Service.
+- Namespaces.
 
-### Core
-- [Kubernetes documentation](https://kubernetes.io/docs/home/)
-- [Kubernetes overview](https://kubernetes.io/docs/concepts/overview/)
-- [Kubernetes components](https://kubernetes.io/docs/concepts/overview/components/)
-- [Workloads](https://kubernetes.io/docs/concepts/workloads/)
-- [Services and networking](https://kubernetes.io/docs/concepts/services-networking/)
-- [Configuration](https://kubernetes.io/docs/concepts/configuration/)
-- [Storage](https://kubernetes.io/docs/concepts/storage/)
-- [Resource management](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
-- [Security](https://kubernetes.io/docs/concepts/security/)
-- [Tasks and tutorials](https://kubernetes.io/docs/tasks/)
+**Checkpoint:** deploy a small app with two replicas and reach it through a Service.
 
-### AI/ML
-- [Kubeflow](https://www.kubeflow.org/docs/)
-- [Kubeflow Pipelines concepts](https://www.kubeflow.org/docs/components/pipelines/concepts/pipeline/)
-- [Kubeflow Trainer](https://www.kubeflow.org/docs/components/trainer/overview/)
-- [KServe](https://kserve.github.io/website/)
-- [Kubernetes v1.34 Dynamic Resource Allocation update](https://kubernetes.io/blog/2025/09/01/kubernetes-v1-34-dra-updates/)
-- [Kubernetes v1.37 workload-aware scheduling update](https://kubernetes.io/blog/2026/09/08/kubernetes-v1-37-advancing-workload-aware-scheduling/)
+### Stage 3 — lifecycle and debugging
+Learn:
+- ConfigMaps and Secrets.
+- Requests and limits.
+- Readiness, liveness, and startup probes.
+- Events, logs, and `describe`.
+- Rollouts and rollback.
+- Jobs and CronJobs.
 
-## 25. Quick self-test
+**Checkpoint:** intentionally break the image tag or configuration, diagnose the problem, and fix it using evidence.
 
-1. What problem does Kubernetes solve that a container runtime alone does not?
-2. Explain desired state and actual state in your own words.
-3. What is the difference between a Pod and a Deployment?
-4. Why should applications connect through Services instead of relying on individual Pod IPs?
-5. What is the difference between readiness and liveness probes?
-6. What is the difference between HPA scaling replicas and a node autoscaler adding capacity?
-7. Why does a Kubernetes Secret still need security configuration?
-8. What is the difference between a Job and a CronJob?
-9. How would you deploy a small inference API safely?
-10. When might a managed container platform be a better choice than Kubernetes?
+### Stage 4 — networking and storage
+Learn:
+- ClusterIP and external exposure.
+- Ingress or Gateway API concepts.
+- DNS and network policies.
+- PVCs and StorageClasses.
+- How a managed database differs from a database running in the cluster.
+
+**Checkpoint:** deploy an API with a database connection in a safe test environment and explain the request path.
+
+### Stage 5 — automation and release
+Learn:
+- CI builds and tests.
+- Image registry and versioning.
+- Helm or Kustomize.
+- GitOps concepts.
+- Staging, smoke tests, and safe releases.
+
+**Checkpoint:** a pull request runs checks and a controlled workflow deploys a tested image to a non-production cluster.
+
+### Stage 6 — security and reliability
+Learn:
+- RBAC and service accounts.
+- Pod Security Standards and security contexts.
+- Secret management.
+- Resource quotas and network policy.
+- Monitoring and alerting.
+- Backup, restore, upgrade, and recovery.
+
+**Checkpoint:** document who can deploy, what the workload can access, how failures are detected, and how the system recovers.
+
+### Stage 7 — AI/ML workloads
+Learn:
+- GPU requests and node selection.
+- Jobs and worker queues.
+- Model-serving APIs.
+- Autoscaling metrics.
+- Kubeflow or KServe only when a real use case needs them.
+- Model versioning, evaluation, observability, and inference cost.
+
+**Checkpoint:** deploy a small model API or a mock inference endpoint, measure latency and failures, and explain what would change when using a GPU.
+
+Do not jump to advanced multi-cluster networking, service meshes, custom operators, or distributed GPU training until the core objects are understandable.
+
+## 25. Beginner project ladder
+
+### Project 1 — Two-replica web server
+Deploy the example from this guide. Inspect Pods, Services, labels, and events.
+
+### Project 2 — Python API with health probes
+Build a tiny FastAPI application with a health endpoint. Containerize it, define resource requests, add readiness/liveness probes, and deploy it locally.
+
+### Project 3 — API + background worker
+Create an API that enqueues a task and a separate worker that processes it. Run the worker as a separate Deployment or Jobs depending on the task model. Add a queue appropriate to your application.
+
+### Project 4 — scheduled data processing
+Use a CronJob to run a harmless, idempotent data-processing task. Examine Job history, logs, failure behavior, and cleanup policies.
+
+### Project 5 — CI to cluster
+Configure CI to test the code and build an image. Deploy to a disposable local or test cluster. Avoid granting a public pull request unrestricted production credentials.
+
+### Project 6 — AI inference endpoint
+Deploy a simple inference API, initially on CPU. Measure request latency, throughput, and error rates. Add GPU scheduling only if the model and environment need it.
+
+### Project 7 — GPU-aware batch training
+In an environment where GPU resources are available, run a small training Job with explicit resource requests. Track duration, memory, utilization, artifacts, and failure recovery. Do not spend money on GPU infrastructure without a clear experiment and budget.
+
+For each project, document the architecture, commands, decisions, failure cases, screenshots or logs that do not expose secrets, and what you would improve.
+
+## 26. Cost and operational trade-offs
+
+Kubernetes is open source, but operating a Kubernetes workload is not free. Costs can include:
+- Control-plane or cluster management fees, depending on provider.
+- Worker VMs and accelerator nodes.
+- Persistent disks and object storage.
+- Load balancers, public IPs, network traffic, and data transfer.
+- Logging, metrics, tracing, and retention.
+- Registry storage and image transfers.
+- Engineering time spent on upgrades, incidents, security, and maintenance.
+
+GPU nodes can be particularly expensive. Scaling a Deployment to zero may not remove the cost of reserved nodes or other infrastructure. HPA and node autoscaling require sensible minimums, limits, and metrics.
+
+Before creating a cluster:
+1. Identify the learning or product goal.
+2. Choose a local cluster first when possible.
+3. Set a budget and cost alerts in a cloud environment.
+4. Use the smallest suitable resources.
+5. Delete test infrastructure when finished.
+6. Check current pricing and provider-specific billing details.
+
+Kubernetes can improve resource utilization and automation at scale, but it does not guarantee lower costs. Complexity also has a cost.
+
+## 27. Kubernetes versions and staying current
+
+Kubernetes is actively developed. As of **October 2026**, the official release page lists v1.37, v1.36, and v1.35 among the three most recent minor release branches. The latest patch listed there for v1.37 is v1.37.1, released September 15, 2026. Check the official release page before choosing a version; support windows and patches change over time.
+
+Do not blindly copy manifests from old tutorials. Confirm:
+- The API version is supported by your target cluster.
+- The tool and chart versions are compatible.
+- Security defaults and deprecated APIs have not changed.
+- The image tag exists and is maintained.
+- The cloud provider supports the Kubernetes version you choose.
+
+Official source: [Kubernetes releases](https://kubernetes.io/releases/).
+
+## 28. Common misconceptions
+
+**"Kubernetes is a programming language."**  
+No. It is a platform and API ecosystem. You describe resources using YAML/JSON and interact with the API using tools and programs.
+
+**"Kubernetes is the same as Docker."**  
+No. Container tools build/run images; Kubernetes orchestrates workloads across a cluster.
+
+**"Kubernetes automatically fixes every failure."**  
+It can replace Pods and reconcile desired state, but it cannot correct every application bug, invalid configuration, broken dependency, or data corruption.
+
+**"A Pod is a permanent machine."**  
+No. Pods are replaceable workload instances. Use controllers and Services for resilient application patterns.
+
+**"Three replicas guarantee high availability."**  
+Not if all replicas depend on one node, one database, one region, or another single point of failure.
+
+**"A running Pod means the application is healthy."**  
+A process may run while its endpoint fails. Readiness probes, application checks, logs, metrics, and real tests provide additional evidence.
+
+**"Kubernetes makes an AI model faster."**  
+Not by itself. It can coordinate deployment and resources; inference performance depends on the model, serving runtime, hardware, batching, data path, and workload.
+
+**"Kubernetes is required for production AI."**  
+No. Serverless, managed model endpoints, VMs, or simpler container platforms may be better for a given use case.
+
+**"Kubernetes Secrets are automatically safe."**  
+No. Authorization, encryption at rest, access patterns, audit, and external integrations matter.
+
+**"I should learn Kubernetes before building applications."**  
+Usually not. Learn programming, HTTP, Git, Linux, testing, and containers first. Kubernetes becomes much easier when you understand the application it is supposed to operate.
+
+## 29. Quick self-test
+
+Try answering these before reading the key.
+
+1. What problem does Kubernetes solve that Docker alone does not?
+2. What is the difference between a Pod, a Deployment, and a Service?
+3. What does the control plane do?
+4. What does it mean for Kubernetes to reconcile desired and actual state?
+5. Why can `kubectl apply` succeed while an application is still broken?
+6. How do resource requests differ from limits?
+7. What is the difference between readiness and liveness probes?
+8. Why is a PVC different from a container's writable filesystem?
+9. What must be installed/configured before Kubernetes can schedule GPU resources?
+10. How could Kubernetes support a RAG application?
+11. Why is Kubernetes not a complete sandbox for untrusted AI-agent code?
+12. Name two cases where a managed serverless service may be a better choice.
 
 ### Answer key
-1. Kubernetes orchestrates scheduling, desired state, replica management, networking, rollout, and related operations across workloads/nodes.
-2. Desired state is what you declare; actual state is what is currently running. Controllers try to reconcile them.
-3. A Pod is a deployable instance; a Deployment manages a set of interchangeable Pod replicas and their rollout.
-4. Pods can be replaced and their IPs can change; a Service supplies a stable logical endpoint.
-5. Readiness controls whether the Pod should receive traffic; liveness detects certain unhealthy states where a restart may help.
-6. HPA changes the number of workload replicas; node autoscaling changes available machine capacity. They work at different layers.
-7. Secret data may be exposed to principals with API/etcd access if access and encryption are not configured correctly.
-8. A Job runs to completion; a CronJob schedules Jobs according to a time-based schedule.
-9. Use a versioned image, least-privilege configuration, no baked-in secrets, resource settings, probes, limited network exposure, logs/metrics, and a tested rollout/recovery path.
-10. When one or a few applications need easy deployment and the team's needs do not justify the operational complexity of managing Kubernetes.
 
-## Final recommendation
+1. Kubernetes coordinates scheduling, replicas, networking, rollout, and lifecycle across a cluster; Docker alone does not provide that cluster control plane.
+2. Pod is the schedulable workload unit; Deployment manages stateless replicas and updates; Service provides stable access to selected Pods.
+3. It exposes the API and runs components/controllers that coordinate desired cluster state.
+4. Controllers repeatedly compare what should exist with what does exist and take action toward the target.
+5. The API may accept valid configuration while an image pull, startup, dependency, networking, or application error remains.
+6. Requests influence scheduling/resource planning; limits constrain resource use according to resource type.
+7. Readiness determines whether an instance should receive traffic; liveness detects a failure that may require a restart.
+8. A PVC requests persistent storage intended to survive Pod replacement; a container writable layer is not a durable-storage guarantee.
+9. Compatible hardware, drivers, vendor device plugin, and correct node/resource configuration; advanced environments may need additional scheduling policy.
+10. It can run APIs, ingestion workers, retrieval services, and model endpoints while managing their deployment, resources, networking, and scaling.
+11. A Pod's default isolation and permissions may not safely contain arbitrary hostile code; use a deliberate sandbox, least privilege, network controls, and restricted credentials.
+12. A small API with low operational needs, or a prototype where managing a cluster would outweigh the benefit.
 
-Learn Kubernetes by understanding the problem first, then using it on a small app. Do not memorize YAML without understanding Pods, controllers, scheduling, networking, resource limits, security, and failure behavior. For AI/ML, start with ordinary containerized services and batch jobs; move to Kubeflow, KServe, GPU scheduling, or distributed training only when you understand what those layers add.
+## 30. Official references and further reading
+
+Start with these primary sources. For current commands, API versions, security guidance, and compatibility, prefer the documentation matching your target Kubernetes release.
+
+### Kubernetes fundamentals
+- [What is Kubernetes?](https://kubernetes.io/docs/concepts/overview/)
+- [Kubernetes components](https://kubernetes.io/docs/concepts/overview/components/)
+- [Objects and desired state](https://kubernetes.io/docs/concepts/overview/working-with-objects/)
+- [Workloads](https://kubernetes.io/docs/concepts/workloads/)
+- [Deployments](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/)
+- [Services](https://kubernetes.io/docs/concepts/services-networking/service/)
+- [Ingress](https://kubernetes.io/docs/concepts/services-networking/ingress/)
+- [Gateway API](https://gateway-api.sigs.k8s.io/)
+- [ConfigMaps](https://kubernetes.io/docs/concepts/configuration/configmap/)
+- [Secrets](https://kubernetes.io/docs/concepts/configuration/secret/)
+- [Persistent volumes](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)
+- [Resource management for Pods and containers](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)
+- [Container probes](https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/)
+- [GPU scheduling](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/)
+
+### Security and operations
+- [Kubernetes security concepts](https://kubernetes.io/docs/concepts/security/)
+- [RBAC good practices](https://kubernetes.io/docs/concepts/security/rbac-good-practices/)
+- [Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/)
+- [Horizontal Pod Autoscaling](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
+- [kubectl command reference](https://kubernetes.io/docs/reference/kubectl/)
+- [Kubernetes releases](https://kubernetes.io/releases/)
+
+### AI/ML ecosystem
+- [Kubeflow introduction](https://www.kubeflow.org/docs/started/introduction/)
+- [Kubeflow Trainer](https://www.kubeflow.org/docs/components/trainer/overview/)
+- [KServe documentation](https://kserve.github.io/website/docs/intro)
+- [Kubernetes blog: operating AI/ML workloads with a Kubeflow Headlamp plugin (July 2026)](https://kubernetes.io/blog/2026/07/13/introducing-headlamp-plugin-for-kubeflow/)
+
+### Tools for practice
+- [kind — Kubernetes in Docker](https://kind.sigs.k8s.io/)
+- [Minikube](https://minikube.sigs.k8s.io/docs/)
+- [Helm](https://helm.sh/docs/)
+- [Kustomize](https://kustomize.io/)
+- [Argo CD](https://argo-cd.readthedocs.io/)
+- [Docker documentation](https://docs.docker.com/)
+
+## Final takeaway
+
+Kubernetes is a **desired-state orchestration platform** for running and managing containerized workloads across a cluster. Its real value is not the YAML itself: it is the coordinated system of APIs, scheduling, controllers, networking, storage integrations, rollout mechanisms, and operational feedback.
+
+For an AIML student in the AI era, learn Kubernetes after the foundations. Start with a small API and a local cluster; learn to deploy, inspect, debug, scale, and secure it. Then apply those skills to AI inference, data processing, model training, or agent-worker systems only when the workload genuinely benefits from orchestration.
