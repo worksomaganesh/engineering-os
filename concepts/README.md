@@ -23,6 +23,8 @@ Use a concept guide when you want to understand what something is, why it exists
 | [What Happens When You Click Run?](what-happens-when-you-click-run/README.md) | From editor and Run button through compilers, runtimes, OS processes, input/output, remote sandboxes, and displayed results |
 | [Programming Languages and Web Technologies](languages-and-web-technologies/README.md) | Use cases and best practices for Python, C, C++, Java, Rust, Swift, TypeScript, React, Tailwind CSS, CSS, and HTML |
 | [Databases](databases/README.md) | Database fundamentals, database families, Oracle, PostgreSQL, MySQL, SQLite, MongoDB, Redis, cloud databases, analytics, vector search, project architecture, selection, and a learning roadmap |
+| [Cloud Engineering](cloud-engineering/README.md) | Cloud infrastructure, compute, storage, networking, IAM, deployment, observability, reliability, cost, role boundaries, and an AI-focused learning order |
+| [Business Intelligence and Data Analytics](business-intelligence/README.md) | BI workflows, data modelling, semantic models, metrics, AI-assisted analytics, Power BI's role, and durable data skills |
 | [Linting](linting/README.md) | What linting is, how linters differ from formatters and tests, practical Python/Ruff example, language-specific tools, and CI workflows |
 
 ## Where Related Knowledge Goes
