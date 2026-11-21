@@ -10,6 +10,8 @@ This folder contains guides to specific platforms and ecosystems used to build, 
 |---|---|
 | [AWS — Amazon Web Services](aws/README.md) | Cloud computing, EC2, S3, RDS, Lambda, IAM, application architecture, pricing, security, and a learning path |
 | [Google Cloud Platform (GCP)](google-cloud/README.md) | Projects, Compute Engine, Cloud Run, Cloud Storage, databases, BigQuery, Vertex AI, IAM, billing, and a beginner learning path |
+| [AWS vs GCP](aws-vs-gcp/README.md) | Provider-neutral comparison of core services, selection criteria, pricing safety, and a practical learning order |
+| [Microsoft Power BI](power-bi/README.md) | Power Query, semantic models, DAX, reports, licensing considerations, AI-assisted workflows, and a beginner practice project |
 | [Firebase](firebase/README.md) | Authentication, Firestore, file storage, hosting, Cloud Functions, basic web examples, security rules, and pricing |
 | [GitHub](github/README.md) | Repositories, Git workflow, branches, pull requests, issues, Actions, Pages, Codespaces, portfolios, and security |
 
